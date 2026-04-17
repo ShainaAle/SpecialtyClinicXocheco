@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama Entidad-Relación - Clínica Xocheco</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8 font-sans">
+    <div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Diagrama Entidad-Relación (ERD) - v4 Final</h1>
+        <div class="flex justify-between items-center mb-6">
+            <p class="text-gray-600">Actualización: Turnos médicos, Catálogos completos y Módulo de Pagos.</p>
+            <div class="flex gap-2">
+                <button onclick="descargarSVG()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded shadow transition duration-200">
+                    Descargar SVG (Sin pérdida de calidad)
+                </button>
+            </div>
+        </div>
+        
+        <!-- Contenedor del Diagrama Mermaid -->
+        <div class="flex justify-center overflow-x-auto border-2 border-gray-200 rounded p-4 bg-gray-50">
+            <pre class="mermaid">
+                erDiagram
+                    TIPO_USUARIO {
+                        int id_tipo_usuario PK
+                        string nombre_rol "Admin, Médico, Recepción, Paciente"
+                    }
+                    
+                    DOMICILIO {
+                        int id_domicilio PK
+                        string calle
+                        string numero_exterior
+                        string colonia
+                        string codigo_postal
+                        string ciudad
+                        string estado
+                    }
+                    
+                    USUARIOS {
+                        int id_usuario PK
+                        int id_domicilio FK
+                        int id_tipo_usuario FK
+                        string nombre
+                        string apellidos
+                        string correo UK
+                        string password_hash
+                    }
+                    
+                    PACIENTES {
+                        int id_paciente PK
+                        int id_usuario FK
+                        date fecha_nacimiento
+                        string tipo_sangre
+                        string alergias
+                        string contacto_emergencia
+                        boolean adeudo
+                    }
+                    
+                    ESPECIALIDADES {
+                        int id_especialidad PK
+                        string nombre
+                    }
+                    
+                    MEDICOS {
+                        int id_medico PK
+                        int id_usuario FK
+                        int id_especialidad FK
+                        string cedula_profesional UK
+                        string universidad_origen
+                        string turno "matutino, vespertino, nocturno"
+                    }
+                    
+                    ESPACIOS_FISICOS {
+                        int id_espacio PK
+                        int piso
+                        int numero
+                        string nombre
+                        int id_tipo FK
+                    }
+
+                    TIPOS_ESPACIOS_FISICOS {
+                        int id_tipo PK
+                        string tipo
+                    }
+                    
+                    SERVICIOS {
+                        int id_servicio PK
+                        string nombre
+                        string descripcion
+                        decimal precio
+                        decimal duracion_horas
+                    }
+                    
+                    CITAS {
+                        int id_cita PK
+                        int id_paciente FK
+                        int id_medico FK
+                        int id_espacio FK
+                        int id_servicio FK
+                        datetime fecha_hora_inicio
+                        string estado
+                    }
+                    
+                    CONSULTAS {
+                        int id_consulta PK
+                        int id_cita FK
+                        string motivo
+                        string diagnostico
+                        string observaciones
+                    }
+                    
+                    RECETAS {
+                        int id_receta PK
+                        int id_consulta FK
+                        datetime fecha_emision
+                        string observaciones
+                        int id_detalle FK
+                    }
+
+                    RECETA_DETALLES {
+                        int id_detalle FK
+                        int id_receta FK
+                    }
+                    
+                    DETALLE_RECETA {
+                        int id_detalle PK
+                        int id_medicamento FK
+                        string dosis
+                        string frecuencia
+                        string duracion
+                    }
+                    
+                    MEDICAMENTOS {
+                        int id_medicamento PK
+                        string nombre_comercial
+                        string principio_activo
+                        string presentacion
+                        string concentracion
+                    }
+
+                    ESTADOS_MEDICAMENTOS {
+                        int id_estado_medicamento PK
+                        string estado "Disponible, Agotado, Próximo a caducar, Caducado"
+                    }
+                    
+                    INVENTARIO {
+                        int id_lote PK
+                        int id_medicamento FK
+                        int cantidad_disponible
+                        date fecha_caducidad
+                        date fecha_ingreso
+                        int id_estado_medicamento FK
+                    }
+                    
+                    PAGOS {
+                        int id_pago PK
+                        int id_cita FK
+                        decimal monto_total
+                        datetime fecha_pago
+                        string estado "Pendiente, Pagado"
+                    }
+                    
+                    BITACORA {
+                        int id_bitacora PK
+                        int id_usuario FK
+                        string accion
+                        string tabla_afectada
+                        datetime fecha_hora
+                    }
+
+                    %% RELACIONES
+                    TIPO_USUARIO ||--o{ USUARIOS : "clasifica"
+                    DOMICILIO ||--o{ USUARIOS : "ubica a"
+                    USUARIOS ||--|| PACIENTES : "puede ser un"
+                    USUARIOS ||--|| MEDICOS : "puede ser un"
+                    USUARIOS ||--o{ BITACORA : "genera"
+                    
+                    ESPECIALIDADES ||--o{ MEDICOS : "certifica a"
+                    
+                    PACIENTES ||--o{ CITAS : "agenda"
+                    MEDICOS ||--o{ CITAS : "atiende"
+                    ESPACIOS_FISICOS ||--o{ CITAS : "aloja"
+                    TIPOS_ESPACIOS_FISICOS ||--o{ ESPACIOS_FISICOS : "define tipo de"
+                    SERVICIOS ||--o{ CITAS : "define tipo de"
+                    
+                    CITAS ||--|| CONSULTAS : "deriva en"
+                    
+                    CITAS ||--|| PAGOS : "genera cargo de"
+                    
+                    CONSULTAS ||--|| RECETAS : "genera"
+                    RECETAS ||--o{ RECETA_DETALLES : "contiene"
+                    DETALLE_RECETA ||--o{ RECETA_DETALLES : "define"
+                    MEDICAMENTOS ||--o{ DETALLE_RECETA : "se prescribe en"
+                    MEDICAMENTOS ||--o{ INVENTARIO : "se almacena en"
+                    
+                    %% AQUI SE AJUSTO PARA MEJOR RENDERIZADO
+                    ESTADOS_MEDICAMENTOS ||--o{ INVENTARIO : "define estado de"
+            </pre>
+        </div>
+        
+        <div class="mt-6 text-sm text-gray-500">
+            <p><strong>Cambios aplicados en v4:</strong></p>
+            <ul class="list-disc ml-5">
+                <li>Se cambió duración a horas en <code>SERVICIOS</code>.</li>
+                <li>Se agregó botón de descarga directa en formato vectorial (SVG).</li>
+                <li>Se agregó el atributo <code>turno</code> a <code>MEDICOS</code>.</li>
+                <li>Se crearon las entidades visuales para <code>TIPO_USUARIO</code>, <code>DOMICILIO</code> y <code>ESPECIALIDADES</code>.</li>
+                <li>Se agregó la tabla <code>PAGOS</code> para cumplir con la rúbrica de finanzas.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Script para renderizar Mermaid y abrir en nueva pestaña -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'neutral',
+            securityLevel: 'loose'
+        });
+    </script>
+    <script>
+        function descargarSVG() {
+            const svgElement = document.querySelector('.mermaid svg');
+            if (svgElement) {
+                // Se asegura de que tenga el formato correcto para ser un archivo independiente
+                if (!svgElement.getAttribute('xmlns')) {
+                    svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                }
+                const svgCode = new XMLSerializer().serializeToString(svgElement);
+                const blob = new Blob([svgCode], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                
+                // Forzar descarga del archivo
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Diagrama_ER_Xocheco.svg';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                alert('Por favor espera a que el diagrama termine de cargar.');
+            }
+        }
+    </script>
+</body>
+</html>
