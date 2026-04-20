@@ -4,7 +4,7 @@
 -- Engine: MySQL / MariaDB (InnoDB)
 -- Author: Shaina Xochitiotzi
 -- Version: 1.0
--- Date: 2024-06-15
+-- Date: 2026-04-20
 -- ==============================================================================
 
 -- Create the database
