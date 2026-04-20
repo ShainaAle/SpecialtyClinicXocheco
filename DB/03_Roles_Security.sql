@@ -2,6 +2,7 @@
 -- DATABASE CREATION SCRIPT: Clinica Xocheco (File 03 of 07)
 -- Purpose: Data Control Language (DCL) - Roles, Users, and Security Permissions
 -- Engine: MySQL / MariaDB
+-- Author: Shaina Xochitiotzi
 -- Version: 1.0
 -- Date: 2026-04-20
 -- ==============================================================================
