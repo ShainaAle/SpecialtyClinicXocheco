@@ -1,0 +1,10 @@
+.carousel-item img {
+    max-height: 500px;
+    object-fit: cover; /* para que no se deforme */
+}
+.nav-sep {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    margin: 0 4px;
+    vertical-align: middle;
+}
