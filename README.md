@@ -1,58 +1,69 @@
-# SpecialtyClinicXocheco
+# SpecialtyClinicXocheco 🏥
 
+Welcome to the database repository for the **Xocheco Specialty Clinic**.
 
-Estructura del Proyecto de Base de Datos - Clínica Xocheco
+To ensure excellent documentation, modularity, and maintainability, this SQL project is divided into **7 independent files**. Each file has a specific purpose and focuses on different aspects of the database architecture (DDL, DCL, Business Logic, Auditing, etc.).
 
-Para garantizar una excelente documentación y modularidad, el proyecto SQL se dividirá en los siguientes 7 archivos independientes. Cada archivo tiene un propósito específico y debe ejecutarse en el orden numerado para respetar las dependencias.
+## 🚀 Execution Order
 
-📁 01_DB_Structure.sql (DDL - Data Definition Language)
+**Important:** The scripts must be executed in the exact numbered order (01 to 07) to respect foreign key dependencies and proper logic flow.
 
-Propósito: Creación de la base de datos y todas las tablas (CREATE TABLE).
+### 📁 01_DB_Structure.sql (DDL - Data Definition Language)
 
-Contenido: Definición de claves primarias (PK), claves foráneas (FK), tipos de datos y restricciones de integridad (NOT NULL, UNIQUE, DEFAULT).
+* **Purpose:** Core database and table creation (`CREATE TABLE`).
 
-📁 02_Indices.sql (Optimización)
+* **Content:** Definition of Primary Keys (PK), Foreign Keys (FK) with `InnoDB` referential integrity, data types, and structural constraints (`NOT NULL`, `UNIQUE`, `DEFAULT`).
 
-Propósito: Mejorar el rendimiento de las consultas.
+### 📁 02_Indices.sql (Optimization)
 
-Contenido: Creación de índices (CREATE INDEX) en las columnas que más se usarán en los bloques WHERE o JOIN (ej. fechas de citas, correos de usuarios, caducidades de inventario).
+* **Purpose:** Query performance optimization.
 
-📁 03_Roles_Seguridad.sql (DCL - Data Control Language)
+* **Content:** Creation of indexes (`CREATE INDEX`) on columns frequently used in `WHERE` or `JOIN` clauses (e.g., appointment dates, user emails, inventory expiration dates) to prevent full table scans.
 
-Propósito: Definir los permisos a nivel de motor de base de datos, separando quién puede hacer qué.
+### 📁 03_Roles_Seguridad.sql (DCL - Data Control Language)
 
-Contenido: * CREATE ROLE (ej. rol_medico, rol_recepcion, rol_admin).
+* **Purpose:** Define database engine-level permissions, enforcing strict Role-Based Access Control (RBAC).
 
-GRANT (ej. Dar permiso de solo lectura (SELECT) a recepción sobre ciertas tablas, pero permisos completos (INSERT, UPDATE, DELETE) al administrador).
+* **Content:** \* `CREATE ROLE` (e.g., `rol_medico`, `rol_recepcion`, `rol_admin`).
 
-📁 04_Procedimientos_Transacciones.sql (Lógica de Negocio)
+  * `GRANT` statements (e.g., Granting read-only `SELECT` access to receptionists for certain tables, while granting full `INSERT, UPDATE, DELETE` permissions to the administrator and restricting inventory modifications exclusively to pharmacists).
 
-Propósito: Encapsular procesos complejos de la clínica que requieran múltiples pasos.
+### 📁 04_Procedimientos_Transacciones.sql (Business Logic)
 
-Contenido: CREATE PROCEDURE. Aquí implementaremos los Rollbacks explícitos y Commits.
+* **Purpose:** Encapsulate complex clinical processes requiring multiple steps into atomic operations.
 
-Ejemplo: Un procedimiento AgendarCita() que primero verifique si hay espacio, luego revise si el paciente tiene adeudos, y si todo está bien, inserte la cita (COMMIT). Si algo falla a la mitad, se cancela todo (ROLLBACK).
+* **Content:** `CREATE PROCEDURE`. Implementation of explicit **Transactions**, `COMMIT`, and `ROLLBACK` commands.
 
-📁 05_Triggers_Auditoria.sql (Automatización)
+  * *Example:* A secure scheduling procedure (`sp_agendar_cita_segura`) that verifies room availability, checks for patient debts, and generates the initial invoice. If everything is valid, it saves the data (`COMMIT`). If any validation fails, it cancels the entire operation to prevent data corruption (`ROLLBACK`).
 
-Propósito: Reaccionar automáticamente a eventos en la base de datos.
+### 📁 05_Triggers_Auditoria.sql (Automation & Auditing)
 
-Contenido: CREATE TRIGGER.
+* **Purpose:** Automatically react to specific database events without backend intervention.
 
-Ejemplo 1: Un trigger que inserte un registro en la tabla BITACORA cada vez que alguien elimine una cita.
+* **Content:** `CREATE TRIGGER`.
 
-Ejemplo 2: Un trigger que reste la cantidad_disponible del INVENTARIO cuando se inserte un DETALLE_RECETA.
+  * *Example 1 (Audit):* A trigger that logs a record into the `BITACORA` (Audit Log) table whenever an appointment's status is updated.
 
-📁 06_Vistas_Reportes.sql (Consultas Predefinidas)
+  * *Example 2 (Automation):* A trigger that automatically deducts the available quantity from the `INVENTARIO` (Inventory) when a prescription detail is inserted.
 
-Propósito: Facilitar la extracción de datos para el módulo de "Reportes" que pide tu rúbrica.
+### 📁 06_Vistas_Reportes.sql (Predefined Queries)
 
-Contenido: CREATE VIEW.
+* **Purpose:** Facilitate data extraction for the frontend's "Reports" module.
 
-Ejemplo: Una vista Vista_Ingresos_Mensuales o Vista_Inventario_Caducado que tu aplicación web pueda consultar fácilmente sin hacer JOINs complejos en el backend.
+* **Content:** `CREATE VIEW`.
 
-📁 07_Datos_Prueba.sql (Seed Data)
+  * *Example:* Pre-compiled views such as Monthly Income, Expired Inventory, or Patient Demographics, allowing the web application to fetch complex data without building heavy `JOIN`s in the backend.
 
-Propósito: Poblar la base de datos con información inicial para poder probar el sistema inmediatamente.
+### 📁 07_Datos_Prueba.sql (Seed Data)
 
-Contenido: Sentencias INSERT INTO con catálogos base (tipos de sangre, servicios) y usuarios de prueba.
+* **Purpose:** Populate the database with initial dummy information to test the system immediately after deployment.
+
+* **Content:** `INSERT INTO` statements containing base catalogs (specialties, physical spaces, services) and dummy user accounts for all roles.
+
+## 🛠️ Installation / Usage
+
+1. Clone this repository.
+
+2. Open your preferred SQL client (e.g., MySQL Workbench, DBeaver, or phpMyAdmin).
+
+3. Execute the scripts in sequential order from `01` to `07`.
