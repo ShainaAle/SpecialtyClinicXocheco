@@ -603,12 +603,12 @@ include("src/conexion/conexion.php");
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-1">
                     <li class="nav-item"><a class="nav-link active" href="index.php">Inicio</a></li>
                     <li class="nav-item"><a class="nav-link" href="servicios.php">Servicios</a></li>
-                    <li class="nav-item"><a class="nav-link" href="medicos.php">Médicos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="admin/medicos/index.php">Médicos</a></li>
                     <?php if (isset($_SESSION['id_usuario'])): ?>
                         <li class="nav-item"><a class="nav-link" href="citas.php">Mis Citas</a></li>
                         <?php if (in_array($_SESSION['rol'], ['admin', 'recepcion'])): ?>
                             <li class="nav-item"><a class="nav-link" href="agenda.php">Agenda</a></li>
-                            <li class="nav-item"><a class="nav-link" href="pacientes.php">Pacientes</a></li>
+                            <li class="nav-item"><a class="nav-link" href="admin/usuarios/index.php">Pacientes</a></li>
                         <?php endif; ?>
                         <?php if ($_SESSION['rol'] === 'admin'): ?>
                             <li class="nav-item"><a class="nav-link" href="admin/dashboard.php">Administración</a></li>

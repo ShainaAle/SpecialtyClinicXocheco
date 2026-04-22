@@ -12,6 +12,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+date_default_timezone_set('America/Mexico_City');
+
 /**
  * Verifica que haya sesión activa.
  * Si no la hay, redirige al login.

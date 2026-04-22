@@ -5,7 +5,7 @@ $activeModule = $activeModule ?? '';
 $basePath = $basePath ?? '..';
 $adminName = $_SESSION['nombre_completo'] ?? 'Administrador';
 $adminRole = $_SESSION['nombre_rol'] ?? 'Administrador';
-$today = date('d/m/Y');
+$currentDateTime = date('d/m/Y | H:i:s');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -23,6 +23,9 @@ $today = date('d/m/Y');
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
+            <a href="<?php echo $basePath; ?>/index.php" class="logo me-2">
+                <img src="<?php echo $basePath; ?>/src/Images/Icon.png" alt="Logo" style="height: 40px;">
+            </a>
             <a class="navbar-brand" href="<?php echo $basePath; ?>/index.php">Clínica <span>Xocheco</span></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav">
                 <span class="navbar-toggler-icon"></span>
@@ -31,6 +34,9 @@ $today = date('d/m/Y');
                 <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'dashboard' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/dashboard.php">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'usuarios' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/usuarios/">Usuarios</a></li>
+                    <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'pacientes' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/pacientes/">Pacientes</a></li>
+                    <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'medicos' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/medicos/">Médicos</a></li>
+                    <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'medicos_disponibilidad' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/medicos/disponibilidad.php">Disponibilidad</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'especialidades' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/especialidades/">Especialidades</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'espacios' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/espacios/">Espacios</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'reportes' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/reportes/">Reportes</a></li>
@@ -56,8 +62,8 @@ $today = date('d/m/Y');
                             <strong><?php echo htmlspecialchars($adminRole); ?></strong>
                         </div>
                         <div class="hero-meta">
-                            <small>Fecha</small>
-                            <strong><?php echo $today; ?></strong>
+                            <small>Fecha y hora</small>
+                            <strong><?php echo $currentDateTime; ?></strong>
                         </div>
                     </div>
                 </div>
