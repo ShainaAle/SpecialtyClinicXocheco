@@ -78,24 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'save';
 
     if ($action === 'delete') {
-        $patientId = (int)($_POST['id_paciente'] ?? 0);
-        if ($patientId <= 0) {
-            $error = 'Paciente inválido.';
-        } else {
-            $check = patientRows($conn, 'SELECT COUNT(*) AS total FROM CITAS WHERE id_paciente = ?', 'i', [$patientId]);
-            if ((int)($check[0]['total'] ?? 0) > 0) {
-                $error = 'No se puede borrar porque ya tiene citas asociadas.';
-            } else {
-                $stmt = $conn->prepare('DELETE FROM PACIENTES WHERE id_paciente = ?');
-                $stmt->bind_param('i', $patientId);
-                if ($stmt->execute()) {
-                    $message = 'Paciente eliminado.';
-                    auditLog($conn, 'PACIENTES', 'ELIMINAR paciente #' . $patientId);
-                } else {
-                    $error = 'No se pudo eliminar.';
-                }
-            }
-        }
+        $error = 'La eliminación está deshabilitada por integridad referencial.';
     } else {
         $patientId = (int)($_POST['id_paciente'] ?? 0);
         $idUsuario = (int)($_POST['id_usuario'] ?? 0);
@@ -376,11 +359,6 @@ include '../../src/admin/header.php';
                                     <td>
                                         <div class="d-flex gap-2">
                                             <a class="btn btn-sm btn-soft" href="?<?php echo htmlspecialchars(http_build_query(array_merge($baseFilterParams, ['edit' => $patient['id_paciente']]))); ?>">Editar</a>
-                                            <form method="post" onsubmit="return confirm('¿Eliminar este paciente?');">
-                                                <input type="hidden" name="action" value="delete">
-                                                <input type="hidden" name="id_paciente" value="<?php echo (int)$patient['id_paciente']; ?>">
-                                                <button class="btn btn-sm btn-outline-danger" type="submit">Borrar</button>
-                                            </form>
                                         </div>
                                     </td>
                                 </tr>

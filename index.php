@@ -15,33 +15,21 @@ include("src/conexion/conexion.php");
 
 $heroAppointmentsHref = 'signin.php';
 $heroPrimaryLabel = 'Acceder al sistema';
-$heroSecondaryHref = '#servicios';
-$heroSecondaryLabel = 'Ver servicios';
 if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'paciente') {
-    $heroAppointmentsHref = 'paciente/citas/';
-    $heroPrimaryLabel = 'Ver mis citas';
-    $heroSecondaryHref = 'paciente/dashboard.php';
-    $heroSecondaryLabel = 'Mi cuenta';
+    $heroAppointmentsHref = 'paciente/dashboard.php';
+    $heroPrimaryLabel = 'Ir a mi panel';
 } elseif (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
     $heroAppointmentsHref = 'admin/dashboard.php';
     $heroPrimaryLabel = 'Ir a mi panel';
-    $heroSecondaryHref = 'logout.php';
-    $heroSecondaryLabel = 'Salir';
 } elseif (isset($_SESSION['rol']) && $_SESSION['rol'] === 'medico') {
     $heroAppointmentsHref = 'medico/dashboard.php';
     $heroPrimaryLabel = 'Ir a mi panel';
-    $heroSecondaryHref = 'logout.php';
-    $heroSecondaryLabel = 'Salir';
 } elseif (isset($_SESSION['rol']) && $_SESSION['rol'] === 'recepcion') {
     $heroAppointmentsHref = 'recepcion/dashboard.php';
     $heroPrimaryLabel = 'Ir a mi panel';
-    $heroSecondaryHref = 'logout.php';
-    $heroSecondaryLabel = 'Salir';
 } elseif (isset($_SESSION['rol']) && $_SESSION['rol'] === 'farmaceutico') {
     $heroAppointmentsHref = 'farmacia/dashboard.php';
     $heroPrimaryLabel = 'Ir a mi panel';
-    $heroSecondaryHref = 'logout.php';
-    $heroSecondaryLabel = 'Salir';
 }
 ?>
 <!DOCTYPE html>
@@ -669,7 +657,6 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'paciente') {
                     <div class="d-flex gap-3 flex-wrap">
                         <?php if (isset($_SESSION['id_usuario'])): ?>
                             <a href="<?php echo htmlspecialchars($heroAppointmentsHref); ?>" class="btn-hero-primary"><?php echo htmlspecialchars($heroPrimaryLabel); ?></a>
-                            <a href="<?php echo htmlspecialchars($heroSecondaryHref); ?>" class="btn-hero-secondary"><?php echo htmlspecialchars($heroSecondaryLabel); ?></a>
                         <?php else: ?>
                             <a href="signin.php" class="btn-hero-primary">Acceder al sistema</a>
                             <a href="#servicios" class="btn-hero-secondary">Ver servicios</a>

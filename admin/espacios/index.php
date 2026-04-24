@@ -52,17 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
-    if ($id > 0) {
-        $stmt = $conn->prepare('DELETE FROM ESPACIOS_FISICOS WHERE id_espacio = ?');
-        $stmt->bind_param('i', $id);
-        if ($stmt->execute()) {
-            $message = 'Espacio eliminado.';
-            auditLog($conn, 'ESPACIOS_FISICOS', 'ELIMINAR espacio');
-        } else {
-            $message = 'No se pudo eliminar.';
-        }
-    }
+    $error = 'La eliminación está deshabilitada por integridad referencial.';
 }
 
 $editing = null;
@@ -166,7 +156,6 @@ include '../../src/admin/header.php';
                                     <td><span class="chip chip-blue"><?php echo htmlspecialchars($item['tipo']); ?></span></td>
                                     <td>
                                         <a class="btn btn-sm btn-soft me-2" href="?edit=<?php echo (int)$item['id_espacio']; ?>">Editar</a>
-                                        <a class="btn btn-sm btn-outline-danger" href="?delete=<?php echo (int)$item['id_espacio']; ?>" onclick="return confirm('¿Eliminar este espacio?');">Borrar</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

@@ -10,8 +10,10 @@ $activeModule = 'dashboard';
 $portalLabel = 'Paciente';
 $portalRole = 'Paciente';
 $portalNav = [
-    ['key' => 'dashboard', 'label' => 'Cuenta', 'href' => 'dashboard.php'],
-    ['key' => 'historial', 'label' => 'Historial clínico', 'href' => 'historial-clinico.php'],
+    ['key' => 'dashboard', 'label' => 'Cuenta', 'href' => 'paciente/dashboard.php'],
+    ['key' => 'citas', 'label' => 'Mis citas', 'href' => 'paciente/citas/'],
+    ['key' => 'recetas', 'label' => 'Mis recetas', 'href' => 'paciente/recetas/'],
+    ['key' => 'historial', 'label' => 'Historial clínico', 'href' => 'paciente/historial-clinico.php'],
 ];
 
 function patientDashboardRows(mysqli $conn, string $sql, string $types = '', array $params = []): array
@@ -108,6 +110,10 @@ include '../src/portal/header.php';
             <a class="mini-card text-decoration-none text-reset" href="citas/">
                 <strong class="d-block mb-1">Mis citas</strong>
                 <span class="text-muted-soft small">Revisa tu agenda y la disponibilidad médica.</span>
+            </a>
+            <a class="mini-card text-decoration-none text-reset" href="recetas/">
+                <strong class="d-block mb-1">Mis recetas</strong>
+                <span class="text-muted-soft small">Tus prescripciones médicas.</span>
             </a>
             <a class="mini-card text-decoration-none text-reset" href="historial-clinico.php">
                 <strong class="d-block mb-1">Historial clínico</strong>

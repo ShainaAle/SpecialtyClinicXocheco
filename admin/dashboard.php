@@ -171,6 +171,10 @@ include '../src/admin/header.php';
                 <strong class="d-block mb-1">Reportes</strong>
                 <span class="text-muted-soft small">Datos clave del sistema.</span>
             </a>
+            <a class="mini-card text-decoration-none text-reset" href="<?php echo $basePath; ?>/admin/inventario/">
+                <strong class="d-block mb-1">Inventario</strong>
+                <span class="text-muted-soft small">Stock y caducidades.</span>
+            </a>
             <a class="mini-card text-decoration-none text-reset" href="<?php echo $basePath; ?>/admin/bitacora/">
                 <strong class="d-block mb-1">Bitácora</strong>
                 <span class="text-muted-soft small">Movimientos y auditoría.</span>

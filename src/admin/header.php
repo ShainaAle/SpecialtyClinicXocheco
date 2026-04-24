@@ -33,11 +33,20 @@ $currentDateTime = date('d/m/Y | H:i:s');
             <div class="collapse navbar-collapse" id="adminNav">
                 <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'dashboard' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/dashboard.php">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'usuarios' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/usuarios/">Usuarios</a></li>
-                    <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'pacientes' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/pacientes/">Pacientes</a></li>
-                    <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'medicos' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/medicos/">Médicos</a></li>
+                    <?php $userNavActive = in_array($activeModule, ['usuarios', 'pacientes', 'medicos'], true); ?>
+                    <li class="nav-item dropdown">
+                        <button class="nav-link dropdown-toggle <?php echo $userNavActive ? 'active' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Usuarios
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark admin-dropdown">
+                            <li><a class="dropdown-item <?php echo $activeModule === 'usuarios' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/usuarios/">General</a></li>
+                            <li><a class="dropdown-item <?php echo $activeModule === 'pacientes' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/pacientes/">Pacientes</a></li>
+                            <li><a class="dropdown-item <?php echo $activeModule === 'medicos' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/medicos/">Médicos</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'medicos_disponibilidad' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/medicos/disponibilidad.php">Disponibilidad</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'citas' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/citas/">Citas</a></li>
+                    <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'inventario' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/inventario/">Inventario</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'especialidades' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/especialidades/">Especialidades</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'espacios' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/espacios/">Espacios</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'reportes' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/reportes/">Reportes</a></li>

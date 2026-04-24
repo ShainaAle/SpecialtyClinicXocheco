@@ -11,6 +11,8 @@ $portalLabel = 'Paciente';
 $portalRole = 'Paciente';
 $portalNav = [
     ['key' => 'dashboard', 'label' => 'Cuenta', 'href' => 'paciente/dashboard.php'],
+    ['key' => 'citas', 'label' => 'Mis citas', 'href' => 'paciente/citas/'],
+    ['key' => 'recetas', 'label' => 'Mis recetas', 'href' => 'paciente/recetas/'],
     ['key' => 'historial', 'label' => 'Historial clínico', 'href' => 'paciente/historial-clinico.php'],
 ];
 
@@ -50,6 +52,133 @@ $patient = citaPacienteRows(
     [(int)$_SESSION['id_usuario']]
 );
 $patient = $patient[0] ?? null;
+
+$doctors = citaPacienteRows(
+    $conn,
+    "SELECT m.id_medico, CONCAT(u.nombre, ' ', u.apellidos) AS medico, e.nombre AS especialidad, m.turno
+     FROM MEDICOS m
+     INNER JOIN USUARIOS u ON m.id_usuario = u.id_usuario
+     INNER JOIN ESPECIALIDADES e ON m.id_especialidad = e.id_especialidad
+     ORDER BY u.apellidos, u.nombre"
+);
+
+$services = citaPacienteRows(
+    $conn,
+    'SELECT id_servicio, nombre, precio FROM SERVICIOS ORDER BY nombre'
+);
+
+function patientTurnAllowsDateTime(string $turno, string $dateTime): bool
+{
+    $hour = (int)date('H', strtotime($dateTime));
+    return match ($turno) {
+        'matutino' => $hour >= 6 && $hour < 14,
+        'vespertino' => $hour >= 14 && $hour < 22,
+        'nocturno' => $hour >= 22 || $hour < 6,
+        default => false,
+    };
+}
+
+function patientFindRoom(mysqli $conn, int $doctorId, string $dateTime): ?array
+{
+    $rooms = citaPacienteRows(
+        $conn,
+        "SELECT e.id_espacio, COALESCE(e.nombre, CONCAT('Espacio #', e.numero)) AS espacio
+         FROM ESPACIOS_FISICOS e
+         INNER JOIN TIPOS_ESPACIOS_FISICOS t ON e.id_tipo = t.id_tipo
+         WHERE LOWER(t.tipo) = 'consultorio'
+           AND NOT EXISTS (
+               SELECT 1
+               FROM CITAS c
+               WHERE c.id_espacio = e.id_espacio
+                 AND c.fecha_hora_inicio = ?
+                 AND c.estado <> 'Cancelada'
+           )
+         ORDER BY e.piso, e.numero",
+        's',
+        [$dateTime]
+    );
+
+    if (!$rooms) {
+        $rooms = citaPacienteRows(
+            $conn,
+            "SELECT e.id_espacio, COALESCE(e.nombre, CONCAT('Espacio #', e.numero)) AS espacio
+             FROM ESPACIOS_FISICOS e
+             WHERE NOT EXISTS (
+                 SELECT 1
+                 FROM CITAS c
+                 WHERE c.id_espacio = e.id_espacio
+                   AND c.fecha_hora_inicio = ?
+                   AND c.estado <> 'Cancelada'
+             )
+             ORDER BY e.piso, e.numero",
+            's',
+            [$dateTime]
+        );
+    }
+
+    return $rooms[0] ?? null;
+}
+
+$scheduleMessage = '';
+$scheduleError = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'schedule') {
+    $doctorId = (int)($_POST['id_medico'] ?? 0);
+    $serviceId = (int)($_POST['id_servicio'] ?? 0);
+    $dateTime = trim($_POST['fecha_hora_inicio'] ?? '');
+
+    if (!$patient) {
+        $scheduleError = 'No se encontró tu perfil de paciente.';
+    } elseif ($doctorId <= 0 || $serviceId <= 0 || $dateTime === '') {
+        $scheduleError = 'Completa médico, servicio y fecha.';
+    } else {
+        $selectedDoctor = citaPacienteRows(
+            $conn,
+            "SELECT m.id_medico, m.turno, CONCAT(u.nombre, ' ', u.apellidos) AS medico
+             FROM MEDICOS m
+             INNER JOIN USUARIOS u ON m.id_usuario = u.id_usuario
+             WHERE m.id_medico = ?",
+            'i',
+            [$doctorId]
+        )[0] ?? null;
+
+        if (!$selectedDoctor) {
+            $scheduleError = 'Médico no encontrado.';
+        } elseif (strtotime($dateTime) < time()) {
+            $scheduleError = 'La cita debe ser en una fecha futura.';
+        } elseif (!patientTurnAllowsDateTime($selectedDoctor['turno'], $dateTime)) {
+            $scheduleError = 'El horario no coincide con el turno del médico.';
+        } else {
+            $busyDoctor = citaPacienteRows(
+                $conn,
+                "SELECT COUNT(*) AS total
+                 FROM CITAS
+                 WHERE id_medico = ?
+                   AND fecha_hora_inicio = ?
+                   AND estado <> 'Cancelada'",
+                'is',
+                [$doctorId, date('Y-m-d H:i:s', strtotime($dateTime))]
+            );
+            if ((int)($busyDoctor[0]['total'] ?? 0) > 0) {
+                $scheduleError = 'El médico ya tiene una cita en ese horario.';
+            } else {
+                $room = patientFindRoom($conn, $doctorId, date('Y-m-d H:i:s', strtotime($dateTime)));
+                if (!$room) {
+                    $scheduleError = 'No hay consultorio disponible para esa hora.';
+                } else {
+                    $stmt = $conn->prepare('CALL sp_agendar_cita_segura(?, ?, ?, ?, ?)');
+                    $dateSql = date('Y-m-d H:i:s', strtotime($dateTime));
+                    $stmt->bind_param('iiiis', $patient['id_paciente'], $doctorId, $room['id_espacio'], $serviceId, $dateSql);
+                    if ($stmt->execute()) {
+                        $scheduleMessage = 'Cita programada correctamente.';
+                    } else {
+                        $scheduleError = 'No se pudo programar. Revisa adeudo o disponibilidad.';
+                    }
+                }
+            }
+        }
+    }
+}
 
 $appointments = citaPacienteRows(
     $conn,
@@ -97,6 +226,8 @@ $stats = [
 include '../../src/portal/header.php';
 ?>
 
+<?php if ($scheduleMessage): ?><div class="alert alert-success"><?php echo htmlspecialchars($scheduleMessage); ?></div><?php endif; ?>
+<?php if ($scheduleError): ?><div class="alert alert-danger"><?php echo htmlspecialchars($scheduleError); ?></div><?php endif; ?>
 <?php if ($patient && (int)$patient['adeudo'] === 1): ?>
     <div class="alert alert-warning">Tienes un adeudo pendiente. Eso puede bloquear nuevas citas.</div>
 <?php endif; ?>
@@ -115,6 +246,47 @@ include '../../src/portal/header.php';
             </div>
         </div>
     <?php endforeach; ?>
+</div>
+
+<div class="panel-card mb-4">
+    <div class="panel-head">
+        <h2 class="section-title">Programar cita</h2>
+        <p class="section-subtitle">Elige médico, servicio y horario. El sistema verifica turno y espacio libre.</p>
+    </div>
+    <div class="panel-body">
+        <form method="post" class="row g-3 align-items-end">
+            <input type="hidden" name="action" value="schedule">
+            <div class="col-md-4">
+                <label class="form-label">Médico</label>
+                <select name="id_medico" class="form-select">
+                    <option value="">Selecciona</option>
+                    <?php foreach ($doctors as $doctor): ?>
+                        <option value="<?php echo (int)$doctor['id_medico']; ?>">
+                            <?php echo htmlspecialchars($doctor['medico'] . ' · ' . $doctor['especialidad'] . ' · ' . $doctor['turno']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Servicio</label>
+                <select name="id_servicio" class="form-select">
+                    <option value="">Selecciona</option>
+                    <?php foreach ($services as $service): ?>
+                        <option value="<?php echo (int)$service['id_servicio']; ?>">
+                            <?php echo htmlspecialchars($service['nombre'] . ' · $' . number_format((float)$service['precio'], 2)); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Fecha y hora</label>
+                <input type="datetime-local" name="fecha_hora_inicio" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-brand w-100" type="submit">Programar</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="row g-4 mb-4">
