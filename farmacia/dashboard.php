@@ -11,6 +11,8 @@ $portalLabel = 'Farmacia';
 $portalRole = 'Farmacéutico';
 $portalNav = [
     ['key' => 'dashboard', 'label' => 'Cuenta', 'href' => 'farmacia/dashboard.php'],
+    ['key' => 'inventario', 'label' => 'Inventario', 'href' => 'farmacia/inventario/'],
+    ['key' => 'recetas', 'label' => 'Recetas', 'href' => 'farmacia/recetas/'],
 ];
 
 function farmaciaRows(mysqli $conn, string $sql): array
@@ -156,6 +158,25 @@ include '../src/portal/header.php';
                     <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<div class="panel-card mt-4">
+    <div class="panel-head">
+        <h2 class="section-title">Accesos rápidos</h2>
+        <p class="section-subtitle">Lo que más vas a usar en farmacia.</p>
+    </div>
+    <div class="panel-body">
+        <div class="mini-grid">
+            <a class="mini-card text-decoration-none text-reset" href="inventario/">
+                <strong class="d-block mb-1">Inventario</strong>
+                <span class="text-muted-soft small">Stock y caducidades.</span>
+            </a>
+            <a class="mini-card text-decoration-none text-reset" href="recetas/">
+                <strong class="d-block mb-1">Recetas</strong>
+                <span class="text-muted-soft small">Prescripciones emitidas.</span>
+            </a>
         </div>
     </div>
 </div>

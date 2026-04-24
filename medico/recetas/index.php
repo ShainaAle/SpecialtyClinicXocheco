@@ -3,6 +3,7 @@ require_once '../../src/auth.php';
 requireRol(['medico']);
 require_once '../../src/conexion/conexion.php';
 require_once '../../src/audit.php';
+require_once '../../src/recetas.php';
 
 $basePath = '../..';
 $pageTitle = 'Recetas';
@@ -34,6 +35,8 @@ function recetaMedicaRows(mysqli $conn, string $sql, string $types = '', array $
     if ($result) while ($row = $result->fetch_assoc()) $rows[] = $row;
     return $rows;
 }
+
+ensurePrescriptionTrackingTable($conn);
 
 $doctor = recetaMedicaRows(
     $conn,
@@ -91,9 +94,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param('iisss', $idReceta, $idMedicamento, $dosis, $frecuencia, $duracion);
                 $stmt->execute();
 
+                ensurePrescriptionTrackingRows($conn, [[
+                    'id_receta' => $idReceta,
+                    'fecha_emision' => date('Y-m-d H:i:s'),
+                ]]);
+
                 auditLog($conn, 'RECETAS', 'INSERTAR receta #' . $idReceta);
                 $conn->commit();
-                $message = 'Receta creada.';
+                $message = 'Receta creada. Código: ' . generatePrescriptionCode($idReceta);
             } catch (Throwable $e) {
                 $conn->rollback();
                 $error = 'No se pudo crear la receta.';
@@ -102,9 +110,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$prescriptions = $doctor ? recetaMedicaRows(
+$prescriptionsRaw = $doctor ? recetaMedicaRows(
     $conn,
     "SELECT r.id_receta, r.fecha_emision, r.observaciones AS receta_observaciones,
+            c.id_cita,
             CONCAT(pu.nombre, ' ', pu.apellidos) AS paciente,
             c.fecha_hora_inicio,
             co.motivo,
@@ -112,7 +121,10 @@ $prescriptions = $doctor ? recetaMedicaRows(
             m.concentracion,
             dr.dosis,
             dr.frecuencia,
-            dr.duracion
+            dr.duracion,
+            rs.codigo_receta,
+            rs.estado_surtido,
+            rs.fecha_surtido
      FROM RECETAS r
      INNER JOIN CONSULTAS co ON r.id_consulta = co.id_consulta
      INNER JOIN CITAS c ON co.id_cita = c.id_cita
@@ -120,11 +132,44 @@ $prescriptions = $doctor ? recetaMedicaRows(
      INNER JOIN USUARIOS pu ON p.id_usuario = pu.id_usuario
      INNER JOIN DETALLE_RECETA dr ON dr.id_receta = r.id_receta
      INNER JOIN MEDICAMENTOS m ON dr.id_medicamento = m.id_medicamento
+     LEFT JOIN RECETAS_SURTIDO rs ON rs.id_receta = r.id_receta
      WHERE c.id_medico = ?
      ORDER BY r.fecha_emision DESC",
     'i',
     [(int)$doctor['id_medico']]
 ) : [];
+
+if ($prescriptionsRaw) {
+    ensurePrescriptionTrackingRows($conn, $prescriptionsRaw);
+}
+$trackingMap = getPrescriptionTrackingMap($conn, array_column($prescriptionsRaw, 'id_receta'));
+
+$prescriptions = [];
+foreach ($prescriptionsRaw as $row) {
+    $id = (int)$row['id_receta'];
+    if (!isset($prescriptions[$id])) {
+        $tracking = $trackingMap[$id] ?? [];
+        $prescriptions[$id] = [
+            'id_receta' => $id,
+            'fecha_emision' => $row['fecha_emision'],
+            'receta_observaciones' => $row['receta_observaciones'],
+            'id_cita' => (int)$row['id_cita'],
+            'paciente' => $row['paciente'],
+            'codigo_receta' => $tracking['codigo_receta'] ?? generatePrescriptionCode($id, $row['fecha_emision']),
+            'estado_surtido' => $tracking['estado_surtido'] ?? 'Pendiente',
+            'fecha_surtido' => $tracking['fecha_surtido'] ?? null,
+            'medico' => $doctor['medico'] ?? '',
+            'medicamentos' => [],
+        ];
+    }
+    $prescriptions[$id]['medicamentos'][] = [
+        'nombre' => $row['nombre_comercial'],
+        'concentracion' => $row['concentracion'],
+        'dosis' => $row['dosis'],
+        'frecuencia' => $row['frecuencia'],
+        'duracion' => $row['duracion'],
+    ];
+}
 
 $candidateAppointments = $doctor ? recetaMedicaRows(
     $conn,
@@ -235,21 +280,25 @@ include '../../src/portal/header.php';
                         <table class="table-clean">
                             <thead>
                                 <tr>
+                                    <th>Código</th>
                                     <th>Fecha</th>
                                     <th>Paciente</th>
                                     <th>Medicamento</th>
-                                    <th>Dosis</th>
-                                    <th>Frecuencia</th>
+                                    <th>Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($prescriptions as $item): ?>
                                     <tr>
+                                        <td><strong><?php echo htmlspecialchars($item['codigo_receta']); ?></strong></td>
                                         <td><?php echo date('d/m/Y H:i', strtotime($item['fecha_emision'])); ?></td>
                                         <td><?php echo htmlspecialchars($item['paciente']); ?></td>
-                                        <td><?php echo htmlspecialchars($item['nombre_comercial']); ?></td>
-                                        <td><?php echo htmlspecialchars($item['dosis']); ?></td>
-                                        <td><?php echo htmlspecialchars($item['frecuencia']); ?></td>
+                                        <td><?php echo htmlspecialchars($item['medicamentos'][0]['nombre'] ?? '-'); ?></td>
+                                        <td>
+                                            <span class="chip <?php echo $item['estado_surtido'] === 'Surtida' ? 'chip-green' : 'chip-sand'; ?>">
+                                                <?php echo htmlspecialchars($item['estado_surtido']); ?>
+                                            </span>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                                 <?php if (!$prescriptions): ?>
