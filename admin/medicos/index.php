@@ -2,6 +2,7 @@
 require_once '../../src/auth.php';
 requireRol(['admin']);
 require_once '../../src/conexion/conexion.php';
+require_once '../../src/audit.php';
 
 $basePath = '../..';
 $pageTitle = 'Médicos';
@@ -90,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param('i', $doctorId);
                 if ($stmt->execute()) {
                     $message = 'Médico eliminado.';
+                    auditLog($conn, 'MEDICOS', 'ELIMINAR médico #' . $doctorId);
                 } else {
                     $error = 'No se pudo eliminar.';
                 }
@@ -113,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param('iisssi', $idUsuario, $idEspecialidad, $cedula, $universidad, $turno, $doctorId);
                 if ($stmt->execute()) {
                     $message = 'Médico actualizado.';
+                    auditLog($conn, 'MEDICOS', 'ACTUALIZAR médico #' . $doctorId);
                 } else {
                     $error = 'No se pudo actualizar.';
                 }
@@ -121,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param('iisss', $idUsuario, $idEspecialidad, $cedula, $universidad, $turno);
                 if ($stmt->execute()) {
                     $message = 'Médico creado.';
+                    auditLog($conn, 'MEDICOS', 'INSERTAR médico #' . (int)$conn->insert_id);
                 } else {
                     $error = 'No se pudo crear. Puede que ese usuario ya esté asignado como médico o la cédula ya exista.';
                 }

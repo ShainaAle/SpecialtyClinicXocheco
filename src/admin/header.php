@@ -37,9 +37,11 @@ $currentDateTime = date('d/m/Y | H:i:s');
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'pacientes' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/pacientes/">Pacientes</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'medicos' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/medicos/">Médicos</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'medicos_disponibilidad' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/medicos/disponibilidad.php">Disponibilidad</a></li>
+                    <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'citas' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/citas/">Citas</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'especialidades' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/especialidades/">Especialidades</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'espacios' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/espacios/">Espacios</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'reportes' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/reportes/">Reportes</a></li>
+                    <li class="nav-item"><a class="nav-link <?php echo $activeModule === 'bitacora' ? 'active' : ''; ?>" href="<?php echo $basePath; ?>/admin/bitacora/">Bitácora</a></li>
                     <li class="nav-item"><span class="nav-link user-greeting"><?php echo htmlspecialchars($adminName); ?></span></li>
                     <li class="nav-item"><a class="nav-link btn-nav-logout" href="<?php echo $basePath; ?>/logout.php">Salir</a></li>
                 </ul>

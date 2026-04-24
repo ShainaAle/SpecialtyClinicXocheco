@@ -148,6 +148,37 @@ include '../src/admin/header.php';
     </div>
 </div>
 
+<div class="panel-card mb-4">
+    <div class="panel-head">
+        <h2 class="section-title">Accesos rápidos</h2>
+        <p class="section-subtitle">Atajos directos a las áreas más usadas.</p>
+    </div>
+    <div class="panel-body">
+        <div class="mini-grid">
+            <a class="mini-card text-decoration-none text-reset" href="<?php echo $basePath; ?>/admin/pacientes/">
+                <strong class="d-block mb-1">Pacientes</strong>
+                <span class="text-muted-soft small">Perfiles y edad visible.</span>
+            </a>
+            <a class="mini-card text-decoration-none text-reset" href="<?php echo $basePath; ?>/admin/medicos/">
+                <strong class="d-block mb-1">Médicos</strong>
+                <span class="text-muted-soft small">Especialistas y turnos.</span>
+            </a>
+            <a class="mini-card text-decoration-none text-reset" href="<?php echo $basePath; ?>/admin/citas/">
+                <strong class="d-block mb-1">Citas</strong>
+                <span class="text-muted-soft small">Agenda y estados.</span>
+            </a>
+            <a class="mini-card text-decoration-none text-reset" href="<?php echo $basePath; ?>/admin/reportes/">
+                <strong class="d-block mb-1">Reportes</strong>
+                <span class="text-muted-soft small">Datos clave del sistema.</span>
+            </a>
+            <a class="mini-card text-decoration-none text-reset" href="<?php echo $basePath; ?>/admin/bitacora/">
+                <strong class="d-block mb-1">Bitácora</strong>
+                <span class="text-muted-soft small">Movimientos y auditoría.</span>
+            </a>
+        </div>
+    </div>
+</div>
+
 <!--
 <div class="panel-card mb-4">
     <div class="panel-head">

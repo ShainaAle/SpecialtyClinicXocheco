@@ -2,6 +2,7 @@
 require_once '../../src/auth.php';
 requireRol(['admin']);
 require_once '../../src/conexion/conexion.php';
+require_once '../../src/audit.php';
 
 $basePath = '../..';
 $pageTitle = 'Especialidades';
@@ -23,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param('s', $nombre);
         if ($stmt->execute()) {
             $message = 'Especialidad guardada.';
+            auditLog($conn, 'ESPECIALIDADES', 'INSERTAR especialidad');
         } else {
             $error = 'No se pudo guardar.';
         }
@@ -31,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param('si', $nombre, $id);
         if ($stmt->execute()) {
             $message = 'Especialidad actualizada.';
+            auditLog($conn, 'ESPECIALIDADES', 'ACTUALIZAR especialidad');
         } else {
             $error = 'No se pudo actualizar.';
         }
@@ -44,6 +47,7 @@ if (isset($_GET['delete'])) {
         $stmt->bind_param('i', $id);
         if ($stmt->execute()) {
             $message = 'Especialidad eliminada.';
+            auditLog($conn, 'ESPECIALIDADES', 'ELIMINAR especialidad');
         } else {
             $error = 'No se pudo eliminar.';
         }
