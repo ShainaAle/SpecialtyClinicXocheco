@@ -10,8 +10,10 @@ $activeModule = 'historial';
 $portalLabel = 'Paciente';
 $portalRole = 'Paciente';
 $portalNav = [
-    ['key' => 'dashboard', 'label' => 'Cuenta', 'href' => 'dashboard.php'],
-    ['key' => 'historial', 'label' => 'Historial clínico', 'href' => 'historial-clinico.php'],
+    ['key' => 'dashboard', 'label' => 'Cuenta', 'href' => 'paciente/dashboard.php'],
+    ['key' => 'citas', 'label' => 'Mis citas', 'href' => 'paciente/citas/'],
+    ['key' => 'recetas', 'label' => 'Mis recetas', 'href' => 'paciente/recetas/'],
+    ['key' => 'historial', 'label' => 'Historial clínico', 'href' => 'paciente/historial-clinico.php'],
 ];
 
 function clinicalRows(mysqli $conn, string $sql, string $types = '', array $params = []): array

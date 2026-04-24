@@ -79,24 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'save';
 
     if ($action === 'delete') {
-        $doctorId = (int)($_POST['id_medico'] ?? 0);
-        if ($doctorId <= 0) {
-            $error = 'Médico inválido.';
-        } else {
-            $check = queryRows($conn, 'SELECT COUNT(*) AS total FROM CITAS WHERE id_medico = ?', 'i', [$doctorId]);
-            if ((int)($check[0]['total'] ?? 0) > 0) {
-                $error = 'No se puede borrar porque ya tiene citas asociadas.';
-            } else {
-                $stmt = $conn->prepare('DELETE FROM MEDICOS WHERE id_medico = ?');
-                $stmt->bind_param('i', $doctorId);
-                if ($stmt->execute()) {
-                    $message = 'Médico eliminado.';
-                    auditLog($conn, 'MEDICOS', 'ELIMINAR médico #' . $doctorId);
-                } else {
-                    $error = 'No se pudo eliminar.';
-                }
-            }
-        }
+        $error = 'La eliminación está deshabilitada por integridad referencial.';
     } else {
         $doctorId = (int)($_POST['id_medico'] ?? 0);
         $idUsuario = (int)($_POST['id_usuario'] ?? 0);
@@ -384,11 +367,6 @@ include '../../src/admin/header.php';
                                     <td>
                                         <div class="d-flex gap-2">
                                             <a class="btn btn-sm btn-soft" href="?<?php echo htmlspecialchars(http_build_query(array_merge($baseFilterParams, ['edit' => $doctor['id_medico']]))); ?>">Editar</a>
-                                            <form method="post" onsubmit="return confirm('¿Eliminar este médico?');">
-                                                <input type="hidden" name="action" value="delete">
-                                                <input type="hidden" name="id_medico" value="<?php echo (int)$doctor['id_medico']; ?>">
-                                                <button class="btn btn-sm btn-outline-danger" type="submit">Borrar</button>
-                                            </form>
                                         </div>
                                     </td>
                                 </tr>

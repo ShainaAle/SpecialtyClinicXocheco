@@ -41,17 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
-    if ($id > 0) {
-        $stmt = $conn->prepare('DELETE FROM ESPECIALIDADES WHERE id_especialidad = ?');
-        $stmt->bind_param('i', $id);
-        if ($stmt->execute()) {
-            $message = 'Especialidad eliminada.';
-            auditLog($conn, 'ESPECIALIDADES', 'ELIMINAR especialidad');
-        } else {
-            $error = 'No se pudo eliminar.';
-        }
-    }
+    $error = 'La eliminación está deshabilitada por integridad referencial.';
 }
 
 $editing = null;
@@ -125,7 +115,6 @@ include '../../src/admin/header.php';
                                     <td><?php echo htmlspecialchars($item['nombre']); ?></td>
                                     <td>
                                         <a class="btn btn-sm btn-soft me-2" href="?edit=<?php echo (int)$item['id_especialidad']; ?>">Editar</a>
-                                        <a class="btn btn-sm btn-outline-danger" href="?delete=<?php echo (int)$item['id_especialidad']; ?>" onclick="return confirm('¿Eliminar esta especialidad?');">Borrar</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

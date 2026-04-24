@@ -65,55 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'save';
 
     if ($action === 'delete') {
-        $userId = (int)($_POST['id_usuario'] ?? 0);
-
-        if ($userId <= 0) {
-            $error = 'Usuario inválido.';
-        } elseif ($userId === (int)($_SESSION['id_usuario'] ?? 0)) {
-            $error = 'No puedes eliminar tu propia sesión.';
-        } else {
-            $stmt = $conn->prepare('SELECT id_domicilio FROM USUARIOS WHERE id_usuario = ?');
-            $stmt->bind_param('i', $userId);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $userRow = $result ? $result->fetch_assoc() : null;
-
-            if (!$userRow) {
-                $error = 'Usuario no encontrado.';
-            } else {
-                $conn->begin_transaction();
-                try {
-                    $stmt = $conn->prepare('DELETE FROM USUARIOS WHERE id_usuario = ?');
-                    $stmt->bind_param('i', $userId);
-                    $stmt->execute();
-
-                    $domicilioId = (int)($userRow['id_domicilio'] ?? 0);
-                    if ($domicilioId > 0) {
-                        $stmt = $conn->prepare('SELECT COUNT(*) AS total FROM USUARIOS WHERE id_domicilio = ?');
-                        $stmt->bind_param('i', $domicilioId);
-                        $stmt->execute();
-                        $countResult = $stmt->get_result();
-                        $countRow = $countResult ? $countResult->fetch_assoc() : ['total' => 0];
-
-                        if ((int)$countRow['total'] === 0) {
-                            $stmt = $conn->prepare('DELETE FROM DOMICILIO WHERE id_domicilio = ?');
-                            $stmt->bind_param('i', $domicilioId);
-                            $stmt->execute();
-                        }
-                    }
-
-                    if (!auditLog($conn, 'USUARIOS', 'ELIMINAR usuario #' . $userId)) {
-                        throw new RuntimeException('No se pudo registrar la bitácora.');
-                    }
-
-                    $conn->commit();
-                    $message = 'Usuario eliminado.';
-                } catch (Throwable $e) {
-                    $conn->rollback();
-                    $error = 'No se pudo eliminar.';
-                }
-            }
-        }
+        $error = 'La eliminación está deshabilitada por integridad referencial.';
     } else {
         $userId = (int)($_POST['id_usuario'] ?? 0);
         $nombre = trim($_POST['nombre'] ?? '');
@@ -465,11 +417,6 @@ include '../../src/admin/header.php';
                                     <td>
                                         <div class="d-flex gap-2">
                                             <a class="btn btn-sm btn-soft" href="?<?php echo htmlspecialchars(http_build_query(array_merge($baseFilterParams, ['edit' => $user['id_usuario']] ))); ?>">Editar</a>
-                                            <form method="post" onsubmit="return confirm('¿Eliminar este usuario?');">
-                                                <input type="hidden" name="action" value="delete">
-                                                <input type="hidden" name="id_usuario" value="<?php echo (int)$user['id_usuario']; ?>">
-                                                <button class="btn btn-sm btn-outline-danger" type="submit">Borrar</button>
-                                            </form>
                                         </div>
                                     </td>
                                 </tr>
