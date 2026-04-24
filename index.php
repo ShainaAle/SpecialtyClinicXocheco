@@ -12,6 +12,37 @@
 <?php
 session_start();
 include("src/conexion/conexion.php");
+
+$heroAppointmentsHref = 'signin.php';
+$heroPrimaryLabel = 'Acceder al sistema';
+$heroSecondaryHref = '#servicios';
+$heroSecondaryLabel = 'Ver servicios';
+if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'paciente') {
+    $heroAppointmentsHref = 'paciente/citas/';
+    $heroPrimaryLabel = 'Ver mis citas';
+    $heroSecondaryHref = 'paciente/dashboard.php';
+    $heroSecondaryLabel = 'Mi cuenta';
+} elseif (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
+    $heroAppointmentsHref = 'admin/dashboard.php';
+    $heroPrimaryLabel = 'Ir a mi panel';
+    $heroSecondaryHref = 'logout.php';
+    $heroSecondaryLabel = 'Salir';
+} elseif (isset($_SESSION['rol']) && $_SESSION['rol'] === 'medico') {
+    $heroAppointmentsHref = 'medico/dashboard.php';
+    $heroPrimaryLabel = 'Ir a mi panel';
+    $heroSecondaryHref = 'logout.php';
+    $heroSecondaryLabel = 'Salir';
+} elseif (isset($_SESSION['rol']) && $_SESSION['rol'] === 'recepcion') {
+    $heroAppointmentsHref = 'recepcion/dashboard.php';
+    $heroPrimaryLabel = 'Ir a mi panel';
+    $heroSecondaryHref = 'logout.php';
+    $heroSecondaryLabel = 'Salir';
+} elseif (isset($_SESSION['rol']) && $_SESSION['rol'] === 'farmaceutico') {
+    $heroAppointmentsHref = 'farmacia/dashboard.php';
+    $heroPrimaryLabel = 'Ir a mi panel';
+    $heroSecondaryHref = 'logout.php';
+    $heroSecondaryLabel = 'Salir';
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -602,13 +633,9 @@ include("src/conexion/conexion.php");
             <div class="collapse navbar-collapse" id="navMain">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-1">
                     <li class="nav-item"><a class="nav-link active" href="index.php">Inicio</a></li>
-                    <li class="nav-item"><a class="nav-link" href="servicios.php">Servicios</a></li>
-                    <li class="nav-item"><a class="nav-link" href="admin/medicos/index.php">Médicos</a></li>
                     <?php if (isset($_SESSION['id_usuario'])): ?>
-                        <li class="nav-item"><a class="nav-link" href="citas.php">Mis Citas</a></li>
-                        <?php if (in_array($_SESSION['rol'], ['admin', 'recepcion'])): ?>
-                            <li class="nav-item"><a class="nav-link" href="agenda.php">Agenda</a></li>
-                            <li class="nav-item"><a class="nav-link" href="admin/usuarios/index.php">Pacientes</a></li>
+                        <?php if ($_SESSION['rol'] === 'paciente'): ?>
+                            <li class="nav-item"><a class="nav-link" href="citas.php">Mis Citas</a></li>
                         <?php endif; ?>
                         <?php if ($_SESSION['rol'] === 'admin'): ?>
                             <li class="nav-item"><a class="nav-link" href="admin/dashboard.php">Administración</a></li>
@@ -641,8 +668,8 @@ include("src/conexion/conexion.php");
                     <p>Atención médica especializada con tecnología de vanguardia. Agenda tus citas, consulta tu historial y mantente en contacto con tu médico desde cualquier lugar.</p>
                     <div class="d-flex gap-3 flex-wrap">
                         <?php if (isset($_SESSION['id_usuario'])): ?>
-                            <a href="citas.php" class="btn-hero-primary">Ver mis citas</a>
-                            <a href="agendar.php" class="btn-hero-secondary">Agendar cita</a>
+                            <a href="<?php echo htmlspecialchars($heroAppointmentsHref); ?>" class="btn-hero-primary"><?php echo htmlspecialchars($heroPrimaryLabel); ?></a>
+                            <a href="<?php echo htmlspecialchars($heroSecondaryHref); ?>" class="btn-hero-secondary"><?php echo htmlspecialchars($heroSecondaryLabel); ?></a>
                         <?php else: ?>
                             <a href="signin.php" class="btn-hero-primary">Acceder al sistema</a>
                             <a href="#servicios" class="btn-hero-secondary">Ver servicios</a>

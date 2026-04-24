@@ -2,6 +2,7 @@
 require_once '../../src/auth.php';
 requireRol(['admin']);
 require_once '../../src/conexion/conexion.php';
+require_once '../../src/audit.php';
 
 $basePath = '../..';
 $pageTitle = 'Disponibilidad médica';
@@ -52,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param('si', $turno, $doctorId);
         if ($stmt->execute()) {
             $message = 'Turno actualizado.';
+            auditLog($conn, 'MEDICOS', 'ACTUALIZAR turno médico #' . $doctorId);
         } else {
             $error = 'No se pudo actualizar.';
         }

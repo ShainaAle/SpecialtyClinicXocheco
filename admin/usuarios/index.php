@@ -2,6 +2,7 @@
 require_once '../../src/auth.php';
 requireRol(['admin']);
 require_once '../../src/conexion/conexion.php';
+require_once '../../src/audit.php';
 
 $basePath = '../..';
 $pageTitle = 'Usuarios';
@@ -82,10 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $conn->begin_transaction();
                 try {
-                    $stmt = $conn->prepare('DELETE FROM BITACORA WHERE id_usuario = ?');
-                    $stmt->bind_param('i', $userId);
-                    $stmt->execute();
-
                     $stmt = $conn->prepare('DELETE FROM USUARIOS WHERE id_usuario = ?');
                     $stmt->bind_param('i', $userId);
                     $stmt->execute();
@@ -103,6 +100,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $stmt->bind_param('i', $domicilioId);
                             $stmt->execute();
                         }
+                    }
+
+                    if (!auditLog($conn, 'USUARIOS', 'ELIMINAR usuario #' . $userId)) {
+                        throw new RuntimeException('No se pudo registrar la bitácora.');
                     }
 
                     $conn->commit();
@@ -165,7 +166,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->bind_param('iisssi', $domicilioId, $idTipoUsuario, $nombre, $apellidos, $correo, $userId);
                     }
                     $stmt->execute();
-                    $message = 'Usuario actualizado.';
+                    if (!auditLog($conn, 'USUARIOS', 'ACTUALIZAR usuario #' . $userId)) {
+                        throw new RuntimeException('No se pudo registrar la bitácora.');
+                    }
                 } else {
                     $stmt = $conn->prepare('INSERT INTO DOMICILIO (calle, numero_exterior, colonia, codigo_postal, ciudad, estado) VALUES (?, ?, ?, ?, ?, ?)');
                     $stmt->bind_param('ssssss', $calle, $numeroExterior, $colonia, $codigoPostal, $ciudad, $estado);
@@ -175,10 +178,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $conn->prepare('INSERT INTO USUARIOS (id_domicilio, id_tipo_usuario, nombre, apellidos, correo, password_hash) VALUES (?, ?, ?, ?, ?, ?)');
                     $stmt->bind_param('iissss', $domicilioId, $idTipoUsuario, $nombre, $apellidos, $correo, $password);
                     $stmt->execute();
-                    $message = 'Usuario creado.';
+                    if (!auditLog($conn, 'USUARIOS', 'INSERTAR usuario #' . (int)$conn->insert_id)) {
+                        throw new RuntimeException('No se pudo registrar la bitácora.');
+                    }
                 }
 
                 $conn->commit();
+                $message = $userId > 0 ? 'Usuario actualizado.' : 'Usuario creado.';
             } catch (Throwable $e) {
                 $conn->rollback();
                 $error = 'No se pudo guardar.';

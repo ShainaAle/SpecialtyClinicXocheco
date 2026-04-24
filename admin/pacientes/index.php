@@ -2,6 +2,7 @@
 require_once '../../src/auth.php';
 requireRol(['admin']);
 require_once '../../src/conexion/conexion.php';
+require_once '../../src/audit.php';
 
 $basePath = '../..';
 $pageTitle = 'Pacientes';
@@ -89,6 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param('i', $patientId);
                 if ($stmt->execute()) {
                     $message = 'Paciente eliminado.';
+                    auditLog($conn, 'PACIENTES', 'ELIMINAR paciente #' . $patientId);
                 } else {
                     $error = 'No se pudo eliminar.';
                 }
@@ -111,6 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param('issssii', $idUsuario, $fechaNacimiento, $tipoSangre, $alergias, $contacto, $adeudo, $patientId);
                 if ($stmt->execute()) {
                     $message = 'Paciente actualizado.';
+                    auditLog($conn, 'PACIENTES', 'ACTUALIZAR paciente #' . $patientId);
                 } else {
                     $error = 'No se pudo actualizar.';
                 }
@@ -119,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param('issssi', $idUsuario, $fechaNacimiento, $tipoSangre, $alergias, $contacto, $adeudo);
                 if ($stmt->execute()) {
                     $message = 'Paciente creado.';
+                    auditLog($conn, 'PACIENTES', 'INSERTAR paciente #' . (int)$conn->insert_id);
                 } else {
                     $error = 'No se pudo crear. Puede que ese usuario ya tenga perfil de paciente.';
                 }

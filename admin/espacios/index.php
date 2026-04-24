@@ -2,6 +2,7 @@
 require_once '../../src/auth.php';
 requireRol(['admin']);
 require_once '../../src/conexion/conexion.php';
+require_once '../../src/audit.php';
 
 $basePath = '../..';
 $pageTitle = 'Espacios físicos';
@@ -32,11 +33,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($mode === 'create') {
         $stmt = $conn->prepare('INSERT INTO ESPACIOS_FISICOS (piso, numero, nombre, id_tipo) VALUES (?, ?, ?, ?)');
         $stmt->bind_param('iisi', $piso, $numero, $nombre, $id_tipo);
-        $message = $stmt->execute() ? 'Espacio guardado.' : 'No se pudo guardar.';
+        if ($stmt->execute()) {
+            $message = 'Espacio guardado.';
+            auditLog($conn, 'ESPACIOS_FISICOS', 'INSERTAR espacio');
+        } else {
+            $message = 'No se pudo guardar.';
+        }
     } elseif ($mode === 'update' && $id > 0) {
         $stmt = $conn->prepare('UPDATE ESPACIOS_FISICOS SET piso = ?, numero = ?, nombre = ?, id_tipo = ? WHERE id_espacio = ?');
         $stmt->bind_param('iisii', $piso, $numero, $nombre, $id_tipo, $id);
-        $message = $stmt->execute() ? 'Espacio actualizado.' : 'No se pudo actualizar.';
+        if ($stmt->execute()) {
+            $message = 'Espacio actualizado.';
+            auditLog($conn, 'ESPACIOS_FISICOS', 'ACTUALIZAR espacio');
+        } else {
+            $message = 'No se pudo actualizar.';
+        }
     }
 }
 
@@ -45,7 +56,12 @@ if (isset($_GET['delete'])) {
     if ($id > 0) {
         $stmt = $conn->prepare('DELETE FROM ESPACIOS_FISICOS WHERE id_espacio = ?');
         $stmt->bind_param('i', $id);
-        $message = $stmt->execute() ? 'Espacio eliminado.' : 'No se pudo eliminar.';
+        if ($stmt->execute()) {
+            $message = 'Espacio eliminado.';
+            auditLog($conn, 'ESPACIOS_FISICOS', 'ELIMINAR espacio');
+        } else {
+            $message = 'No se pudo eliminar.';
+        }
     }
 }
 
