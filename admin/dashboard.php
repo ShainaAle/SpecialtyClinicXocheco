@@ -65,6 +65,26 @@ $inventory = fetchAllRows(
      LIMIT 4"
 );
 
+$lowStockItems = fetchAllRows(
+    $conn,
+    "SELECT m.nombre_comercial, i.cantidad_disponible
+     FROM INVENTARIO i
+     INNER JOIN MEDICAMENTOS m ON i.id_medicamento = m.id_medicamento
+     WHERE i.cantidad_disponible <= 10
+     ORDER BY i.cantidad_disponible ASC, m.nombre_comercial ASC
+     LIMIT 5"
+);
+
+$expiringSoonItems = fetchAllRows(
+    $conn,
+    "SELECT m.nombre_comercial, i.fecha_caducidad, i.cantidad_disponible
+     FROM INVENTARIO i
+     INNER JOIN MEDICAMENTOS m ON i.id_medicamento = m.id_medicamento
+     WHERE i.fecha_caducidad <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+     ORDER BY i.fecha_caducidad ASC, m.nombre_comercial ASC
+     LIMIT 5"
+);
+
 include '../src/admin/header.php';
 ?>
 
@@ -81,6 +101,55 @@ include '../src/admin/header.php';
 </div>
 
 <div class="row g-4 mb-4">
+    <div class="col-lg-12">
+        <div class="panel-card h-100">
+            <div class="panel-head">
+                <h2 class="section-title">Alertas de inventario</h2>
+                <p class="section-subtitle">Medicamentos que ya conviene revisar.</p>
+            </div>
+            <div class="panel-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="mini-card h-100">
+                            <strong class="d-block mb-3">Stock bajo</strong>
+                            <?php if ($lowStockItems): ?>
+                                <div class="d-grid gap-2">
+                                    <?php foreach ($lowStockItems as $item): ?>
+                                        <div class="d-flex justify-content-between gap-2">
+                                            <span><?php echo htmlspecialchars($item['nombre_comercial']); ?></span>
+                                            <span class="chip chip-red"><?php echo (int)$item['cantidad_disponible']; ?> uds</span>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="text-muted-soft">No hay medicamentos con stock bajo.</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mini-card h-100">
+                            <strong class="d-block mb-3">Próximos a caducar</strong>
+                            <?php if ($expiringSoonItems): ?>
+                                <div class="d-grid gap-2">
+                                    <?php foreach ($expiringSoonItems as $item): ?>
+                                        <div class="d-flex justify-content-between gap-2">
+                                            <span><?php echo htmlspecialchars($item['nombre_comercial']); ?></span>
+                                            <span class="chip <?php echo strtotime($item['fecha_caducidad']) < strtotime(date('Y-m-d')) ? 'chip-red' : 'chip-amber'; ?>">
+                                                <?php echo date('d/m/Y', strtotime($item['fecha_caducidad'])); ?>
+                                            </span>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="text-muted-soft">No hay medicamentos próximos a caducar.</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-lg-8">
         <div class="panel-card h-100">
             <div class="panel-head">

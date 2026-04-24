@@ -19,7 +19,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($nombre === '') {
         $error = 'Escribe un nombre.';
-    } elseif ($mode === 'create') {
+    } else {
+        $duplicate = $conn->prepare('SELECT id_especialidad FROM ESPECIALIDADES WHERE LOWER(nombre) = LOWER(?) AND id_especialidad <> ? LIMIT 1');
+        if ($duplicate) {
+            $duplicate->bind_param('si', $nombre, $id);
+            $duplicate->execute();
+            $duplicate = $duplicate->get_result();
+            $exists = $duplicate ? $duplicate->fetch_assoc() : null;
+        } else {
+            $exists = null;
+        }
+
+        if ($exists) {
+            $error = 'Ya existe una especialidad con ese nombre.';
+        } elseif ($mode === 'create') {
         $stmt = $conn->prepare('INSERT INTO ESPECIALIDADES (nombre) VALUES (?)');
         $stmt->bind_param('s', $nombre);
         if ($stmt->execute()) {
@@ -28,14 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = 'No se pudo guardar.';
         }
-    } elseif ($mode === 'update' && $id > 0) {
-        $stmt = $conn->prepare('UPDATE ESPECIALIDADES SET nombre = ? WHERE id_especialidad = ?');
-        $stmt->bind_param('si', $nombre, $id);
-        if ($stmt->execute()) {
-            $message = 'Especialidad actualizada.';
-            auditLog($conn, 'ESPECIALIDADES', 'ACTUALIZAR especialidad');
-        } else {
-            $error = 'No se pudo actualizar.';
+        } elseif ($mode === 'update' && $id > 0) {
+            $stmt = $conn->prepare('UPDATE ESPECIALIDADES SET nombre = ? WHERE id_especialidad = ?');
+            $stmt->bind_param('si', $nombre, $id);
+            if ($stmt->execute()) {
+                $message = 'Especialidad actualizada.';
+                auditLog($conn, 'ESPECIALIDADES', 'ACTUALIZAR especialidad');
+            } else {
+                $error = 'No se pudo actualizar.';
+            }
         }
     }
 }
