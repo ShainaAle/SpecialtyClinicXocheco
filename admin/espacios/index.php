@@ -30,23 +30,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($piso <= 0 || $numero <= 0 || $id_tipo <= 0) {
         $error = 'Completa piso, número y tipo.';
-    } elseif ($mode === 'create') {
-        $stmt = $conn->prepare('INSERT INTO ESPACIOS_FISICOS (piso, numero, nombre, id_tipo) VALUES (?, ?, ?, ?)');
-        $stmt->bind_param('iisi', $piso, $numero, $nombre, $id_tipo);
-        if ($stmt->execute()) {
-            $message = 'Espacio guardado.';
-            auditLog($conn, 'ESPACIOS_FISICOS', 'INSERTAR espacio');
+    } else {
+        $duplicate = $conn->prepare('SELECT id_espacio FROM ESPACIOS_FISICOS WHERE piso = ? AND numero = ? AND id_espacio <> ? LIMIT 1');
+        if ($duplicate) {
+            $duplicate->bind_param('iii', $piso, $numero, $id);
+            $duplicate->execute();
+            $duplicateResult = $duplicate->get_result();
+            $exists = $duplicateResult ? $duplicateResult->fetch_assoc() : null;
         } else {
-            $message = 'No se pudo guardar.';
+            $exists = null;
         }
-    } elseif ($mode === 'update' && $id > 0) {
-        $stmt = $conn->prepare('UPDATE ESPACIOS_FISICOS SET piso = ?, numero = ?, nombre = ?, id_tipo = ? WHERE id_espacio = ?');
-        $stmt->bind_param('iisii', $piso, $numero, $nombre, $id_tipo, $id);
-        if ($stmt->execute()) {
-            $message = 'Espacio actualizado.';
-            auditLog($conn, 'ESPACIOS_FISICOS', 'ACTUALIZAR espacio');
-        } else {
-            $message = 'No se pudo actualizar.';
+
+        if ($exists) {
+            $error = 'Ya existe un espacio con ese piso y número.';
+        } elseif ($mode === 'create') {
+            $stmt = $conn->prepare('INSERT INTO ESPACIOS_FISICOS (piso, numero, nombre, id_tipo) VALUES (?, ?, ?, ?)');
+            $stmt->bind_param('iisi', $piso, $numero, $nombre, $id_tipo);
+            if ($stmt->execute()) {
+                $message = 'Espacio guardado.';
+                auditLog($conn, 'ESPACIOS_FISICOS', 'INSERTAR espacio');
+            } else {
+                $message = 'No se pudo guardar.';
+            }
+        } elseif ($mode === 'update' && $id > 0) {
+            $stmt = $conn->prepare('UPDATE ESPACIOS_FISICOS SET piso = ?, numero = ?, nombre = ?, id_tipo = ? WHERE id_espacio = ?');
+            $stmt->bind_param('iisii', $piso, $numero, $nombre, $id_tipo, $id);
+            if ($stmt->execute()) {
+                $message = 'Espacio actualizado.';
+                auditLog($conn, 'ESPACIOS_FISICOS', 'ACTUALIZAR espacio');
+            } else {
+                $message = 'No se pudo actualizar.';
+            }
         }
     }
 }

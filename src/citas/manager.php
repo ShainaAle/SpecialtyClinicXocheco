@@ -27,6 +27,29 @@ function citasQuery(mysqli $conn, string $sql, string $types = '', array $params
     return $rows;
 }
 
+function citasTurnAllowsDateTime(string $turno, string $dateTime): bool
+{
+    $hour = (int)date('H', strtotime($dateTime));
+    return match ($turno) {
+        'matutino' => $hour >= 6 && $hour < 14,
+        'vespertino' => $hour >= 14 && $hour < 22,
+        'nocturno' => $hour >= 22 || $hour < 6,
+        default => false,
+    };
+}
+
+function citasParseDateTimeInput(string $value): ?DateTimeImmutable
+{
+    $timezone = new DateTimeZone(date_default_timezone_get());
+    $dateTime = DateTimeImmutable::createFromFormat('Y-m-d\TH:i', $value, $timezone);
+    if (!$dateTime) {
+        return null;
+    }
+    return $dateTime->setTime((int)$dateTime->format('H'), (int)$dateTime->format('i'), 0);
+}
+
+$nowMinute = (new DateTimeImmutable('now'))->setTime((int)date('H'), (int)date('i'), 0);
+
 $message = $message ?? '';
 $error = $error ?? '';
 
@@ -75,54 +98,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $idServicio = (int)($_POST['id_servicio'] ?? 0);
         $fechaHora = trim($_POST['fecha_hora_inicio'] ?? '');
         $estado = trim($_POST['estado'] ?? 'Programada');
+        $fechaObjeto = citasParseDateTimeInput($fechaHora);
 
         if ($idPaciente <= 0 || $idMedico <= 0 || $idEspacio <= 0 || $idServicio <= 0 || $fechaHora === '') {
             $error = 'Completa todos los campos.';
+        } elseif (!$fechaObjeto) {
+            $error = 'La fecha no es válida.';
+        } elseif ($fechaObjeto < $nowMinute) {
+            $error = 'No puedes programar citas en fechas pasadas.';
         } else {
-            $fechaSql = date('Y-m-d H:i:s', strtotime($fechaHora));
+            $fechaSql = $fechaObjeto->format('Y-m-d H:i:s');
+            $selectedDoctor = citasQuery(
+                $conn,
+                'SELECT turno FROM MEDICOS WHERE id_medico = ?',
+                'i',
+                [$idMedico]
+            )[0] ?? null;
 
-            if ($idCita <= 0) {
-                $stmt = $conn->prepare('CALL sp_agendar_cita_segura(?, ?, ?, ?, ?)');
-                $stmt->bind_param('iiiis', $idPaciente, $idMedico, $idEspacio, $idServicio, $fechaSql);
-                if ($stmt->execute()) {
-                    $message = 'Cita programada.';
-                    auditLog($conn, 'CITAS', 'PROGRAMAR cita');
-                } else {
-                    $error = 'No se pudo programar. Revisa adeudo, horarios u ocupación.';
-                }
+            if (!$selectedDoctor) {
+                $error = 'El médico no existe.';
+            } elseif (!citasTurnAllowsDateTime($selectedDoctor['turno'], $fechaSql)) {
+                $error = 'El horario no coincide con el turno del médico.';
             } else {
-                $row = citasQuery($conn, 'SELECT estado FROM CITAS WHERE id_cita = ?', 'i', [$idCita]);
-                if (!$row) {
-                    $error = 'Cita no encontrada.';
-                } else {
-                    $conflictDoctor = citasQuery(
-                        $conn,
-                        'SELECT COUNT(*) AS total FROM CITAS WHERE id_medico = ? AND fecha_hora_inicio = ? AND estado != "Cancelada" AND id_cita != ?',
-                        'isi',
-                        [$idMedico, $fechaSql, $idCita]
-                    );
-                    $conflictRoom = citasQuery(
-                        $conn,
-                        'SELECT COUNT(*) AS total FROM CITAS WHERE id_espacio = ? AND fecha_hora_inicio = ? AND estado != "Cancelada" AND id_cita != ?',
-                        'isi',
-                        [$idEspacio, $fechaSql, $idCita]
-                    );
-                    $debt = citasQuery($conn, 'SELECT adeudo FROM PACIENTES WHERE id_paciente = ?', 'i', [$idPaciente]);
-
-                    if ((int)($debt[0]['adeudo'] ?? 0) === 1) {
-                        $error = 'El paciente tiene adeudo.';
-                    } elseif ((int)($conflictDoctor[0]['total'] ?? 0) > 0) {
-                        $error = 'El médico ya tiene otra cita.';
-                    } elseif ((int)($conflictRoom[0]['total'] ?? 0) > 0) {
-                        $error = 'El espacio está ocupado.';
+                if ($idCita <= 0) {
+                    $stmt = $conn->prepare('CALL sp_agendar_cita_segura(?, ?, ?, ?, ?)');
+                    $stmt->bind_param('iiiis', $idPaciente, $idMedico, $idEspacio, $idServicio, $fechaSql);
+                    if ($stmt->execute()) {
+                        $message = 'Cita programada.';
+                        auditLog($conn, 'CITAS', 'PROGRAMAR cita');
                     } else {
-                        $stmt = $conn->prepare('UPDATE CITAS SET id_paciente = ?, id_medico = ?, id_espacio = ?, id_servicio = ?, fecha_hora_inicio = ?, estado = ? WHERE id_cita = ?');
-                        $stmt->bind_param('iiiissi', $idPaciente, $idMedico, $idEspacio, $idServicio, $fechaSql, $estado, $idCita);
-                        if ($stmt->execute()) {
-                            $message = 'Cita actualizada.';
-                            auditLog($conn, 'CITAS', 'ACTUALIZAR cita #' . $idCita);
+                        $error = 'No se pudo programar. Revisa adeudo, horarios u ocupación.';
+                    }
+                } else {
+                    $row = citasQuery($conn, 'SELECT estado FROM CITAS WHERE id_cita = ?', 'i', [$idCita]);
+                    if (!$row) {
+                        $error = 'Cita no encontrada.';
+                    } else {
+                        $conflictDoctor = citasQuery(
+                            $conn,
+                            'SELECT COUNT(*) AS total FROM CITAS WHERE id_medico = ? AND fecha_hora_inicio = ? AND estado != "Cancelada" AND id_cita != ?',
+                            'isi',
+                            [$idMedico, $fechaSql, $idCita]
+                        );
+                        $conflictRoom = citasQuery(
+                            $conn,
+                            'SELECT COUNT(*) AS total FROM CITAS WHERE id_espacio = ? AND fecha_hora_inicio = ? AND estado != "Cancelada" AND id_cita != ?',
+                            'isi',
+                            [$idEspacio, $fechaSql, $idCita]
+                        );
+                        $debt = citasQuery($conn, 'SELECT adeudo FROM PACIENTES WHERE id_paciente = ?', 'i', [$idPaciente]);
+
+                        if ((int)($debt[0]['adeudo'] ?? 0) === 1) {
+                            $error = 'El paciente tiene adeudo.';
+                        } elseif ((int)($conflictDoctor[0]['total'] ?? 0) > 0) {
+                            $error = 'El médico ya tiene otra cita.';
+                        } elseif ((int)($conflictRoom[0]['total'] ?? 0) > 0) {
+                            $error = 'El espacio está ocupado.';
                         } else {
-                            $error = 'No se pudo actualizar.';
+                            $stmt = $conn->prepare('UPDATE CITAS SET id_paciente = ?, id_medico = ?, id_espacio = ?, id_servicio = ?, fecha_hora_inicio = ?, estado = ? WHERE id_cita = ?');
+                            $stmt->bind_param('iiiissi', $idPaciente, $idMedico, $idEspacio, $idServicio, $fechaSql, $estado, $idCita);
+                            if ($stmt->execute()) {
+                                $message = 'Cita actualizada.';
+                                auditLog($conn, 'CITAS', 'ACTUALIZAR cita #' . $idCita);
+                            } else {
+                                $error = 'No se pudo actualizar.';
+                            }
                         }
                     }
                 }
