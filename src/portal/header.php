@@ -43,12 +43,39 @@ function portal_nav_href(string $basePath, string $href): string
             <div class="collapse navbar-collapse" id="portalNav">
                 <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
                     <?php foreach ($portalNav as $item): ?>
-                        <?php $href = portal_nav_href($basePath, $item['href'] ?? '#'); ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo $activeModule === ($item['key'] ?? '') ? 'active' : ''; ?>" href="<?php echo htmlspecialchars($href); ?>">
-                                <?php echo htmlspecialchars($item['label'] ?? 'Link'); ?>
-                            </a>
-                        </li>
+                        <?php if (($item['type'] ?? 'link') === 'dropdown'): ?>
+                            <?php
+                            $children = $item['children'] ?? [];
+                            $dropdownActive = false;
+                            foreach ($children as $child) {
+                                if ($activeModule === ($child['key'] ?? '')) {
+                                    $dropdownActive = true;
+                                    break;
+                                }
+                            }
+                            ?>
+                            <li class="nav-item dropdown">
+                                <button class="nav-link dropdown-toggle <?php echo $dropdownActive ? 'active' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <?php echo htmlspecialchars($item['label'] ?? 'Menú'); ?>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark admin-dropdown">
+                                    <?php foreach ($children as $child): ?>
+                                        <li>
+                                            <a class="dropdown-item <?php echo $activeModule === ($child['key'] ?? '') ? 'active' : ''; ?>" href="<?php echo htmlspecialchars(portal_nav_href($basePath, $child['href'] ?? '#')); ?>">
+                                                <?php echo htmlspecialchars($child['label'] ?? 'Link'); ?>
+                                            </a>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </li>
+                        <?php else: ?>
+                            <?php $href = portal_nav_href($basePath, $item['href'] ?? '#'); ?>
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo $activeModule === ($item['key'] ?? '') ? 'active' : ''; ?>" href="<?php echo htmlspecialchars($href); ?>">
+                                    <?php echo htmlspecialchars($item['label'] ?? 'Link'); ?>
+                                </a>
+                            </li>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                     <li class="nav-item">
                         <span class="nav-link user-greeting"><?php echo htmlspecialchars($portalUser); ?></span>

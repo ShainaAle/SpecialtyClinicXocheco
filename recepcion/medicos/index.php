@@ -1,15 +1,16 @@
 <?php
 require_once '../../src/auth.php';
-requireRol(['admin']);
+requireRol(['admin', 'recepcion']);
 require_once '../../src/conexion/conexion.php';
 require_once '../../src/audit.php';
+require_once '../../src/recepcion/context.php';
 
 $basePath = '../..';
 $pageTitle = 'Médicos';
 $pageSubtitle = 'Administrar especialistas, cédulas, especialidades y turnos.';
 $activeModule = 'medicos';
 
-function queryRows(mysqli $conn, string $sql, string $types = '', array $params = []): array
+function queryRowsRecepcion(mysqli $conn, string $sql, string $types = '', array $params = []): array
 {
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -49,7 +50,7 @@ $selectedUserId = (int)($_GET['user'] ?? 0);
 $editing = null;
 if (isset($_GET['edit'])) {
     $editId = (int)$_GET['edit'];
-    $rows = queryRows(
+    $rows = queryRowsRecepcion(
         $conn,
         "SELECT m.id_medico, m.id_usuario, m.id_especialidad, m.cedula_profesional, m.universidad_origen, m.turno,
                 u.nombre, u.apellidos, u.correo
@@ -63,7 +64,7 @@ if (isset($_GET['edit'])) {
 }
 
 if ($selectedUserId > 0 && !$editing) {
-    $selectedUserExists = queryRows(
+    $selectedUserExists = queryRowsRecepcion(
         $conn,
         "SELECT u.id_usuario
          FROM USUARIOS u
@@ -77,14 +78,14 @@ if ($selectedUserId > 0 && !$editing) {
     }
 }
 
-$specialties = queryRows($conn, 'SELECT id_especialidad, nombre FROM ESPECIALIDADES ORDER BY nombre');
+$specialties = queryRowsRecepcion($conn, 'SELECT id_especialidad, nombre FROM ESPECIALIDADES ORDER BY nombre');
 
-$availableUsers = queryRows(
+$availableUsers = queryRowsRecepcion(
     $conn,
     "SELECT u.id_usuario, CONCAT(u.nombre, ' ', u.apellidos) AS nombre_completo, u.correo
      FROM USUARIOS u
      INNER JOIN TIPO_USUARIO t ON u.id_tipo_usuario = t.id_tipo_usuario
-     WHERE t.nombre_rol = 'Médico'
+    WHERE t.nombre_rol = 'Médico'
        AND (u.id_usuario NOT IN (SELECT id_usuario FROM MEDICOS) OR u.id_usuario = ?)
      ORDER BY u.nombre, u.apellidos",
     'i',
@@ -177,12 +178,12 @@ if (!empty($where)) {
 }
 
 $sql .= " ORDER BY {$sortField} {$dir}, m.id_medico ASC";
-$doctors = queryRows($conn, $sql, $types, $params);
+$doctors = queryRowsRecepcion($conn, $sql, $types, $params);
 
-function doctorSortButton(string $label, string $key, string $currentSort, string $currentDir, array $baseParams): string
+function doctorSortButtonRecepcion(string $label, string $key, string $currentSort, string $currentDir, array $baseParams): string
 {
     $isActive = $currentSort === $key;
-    $nextDir = $isActive && $currentDir === 'ASC' ? 'desc' : 'asc';
+    $nextDir = $isActive && $currentDir === 'ASC' ? 'asc' : 'desc';
     $baseParams['sort'] = $key;
     $baseParams['dir'] = $nextDir;
     $arrow = $isActive ? ($currentDir === 'ASC' ? ' ↑' : ' ↓') : '';
@@ -197,7 +198,7 @@ $baseFilterParams = [
     'dir' => strtolower($dir),
 ];
 
-include '../../src/admin/header.php';
+include '../../src/portal/header.php';
 ?>
 
 <?php if ($message): ?><div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
@@ -347,10 +348,10 @@ include '../../src/admin/header.php';
                     </div>
                 </form>
                 <div class="d-flex flex-wrap gap-2 mt-3">
-                    <?php echo doctorSortButton('ID', 'id', $sort, $dir, $baseFilterParams); ?>
-                    <?php echo doctorSortButton('Nombre', 'name', $sort, $dir, $baseFilterParams); ?>
-                    <?php echo doctorSortButton('Especialidad', 'specialty', $sort, $dir, $baseFilterParams); ?>
-                    <?php echo doctorSortButton('Turno', 'turno', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo doctorSortButtonRecepcion('ID', 'id', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo doctorSortButtonRecepcion('Nombre', 'name', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo doctorSortButtonRecepcion('Especialidad', 'specialty', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo doctorSortButtonRecepcion('Turno', 'turno', $sort, $dir, $baseFilterParams); ?>
                 </div>
             </div>
         </div>

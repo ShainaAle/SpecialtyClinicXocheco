@@ -2,17 +2,13 @@
 require_once '../src/auth.php';
 requireRol(['recepcion']);
 require_once '../src/conexion/conexion.php';
+require_once '../src/inventory.php';
 
 $basePath = '..';
 $pageTitle = 'Recepción';
 $pageSubtitle = 'Control rápido de agenda, pacientes y citas del día.';
 $activeModule = 'dashboard';
-$portalLabel = 'Recepción';
-$portalRole = 'Recepción';
-$portalNav = [
-    ['key' => 'dashboard', 'label' => 'Dashboard', 'href' => 'dashboard.php'],
-    ['key' => 'citas', 'label' => 'Citas', 'href' => 'citas/'],
-];
+require_once '../src/recepcion/context.php';
 
 function receptionRows(mysqli $conn, string $sql, string $types = '', array $params = []): array
 {
@@ -68,13 +64,25 @@ include '../src/portal/header.php';
     <?php endforeach; ?>
 </div>
 
-    <div class="panel-card mb-4">
+<div class="panel-card mb-4">
     <div class="panel-head">
         <h2 class="section-title">Acceso rápido</h2>
-        <p class="section-subtitle">Entra directo a la gestión de citas.</p>
+        <p class="section-subtitle">Entra directo a los módulos de trabajo.</p>
     </div>
     <div class="panel-body">
         <div class="mini-grid">
+            <a class="mini-card text-decoration-none text-reset" href="usuarios/">
+                <strong class="d-block mb-1">Usuarios</strong>
+                <span class="text-muted-soft small">Altas y cambios de cuentas.</span>
+            </a>
+            <a class="mini-card text-decoration-none text-reset" href="pacientes/">
+                <strong class="d-block mb-1">Pacientes</strong>
+                <span class="text-muted-soft small">Perfiles clínicos y edad.</span>
+            </a>
+            <a class="mini-card text-decoration-none text-reset" href="medicos/">
+                <strong class="d-block mb-1">Médicos</strong>
+                <span class="text-muted-soft small">Especialistas y turnos.</span>
+            </a>
             <a class="mini-card text-decoration-none text-reset" href="citas/">
                 <strong class="d-block mb-1">Citas</strong>
                 <span class="text-muted-soft small">Programar, confirmar y cancelar.</span>
