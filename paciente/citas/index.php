@@ -231,6 +231,9 @@ include '../../src/portal/header.php';
 <?php if ($patient && (int)$patient['adeudo'] === 1): ?>
     <div class="alert alert-warning">Tienes un adeudo pendiente. Eso puede bloquear nuevas citas.</div>
 <?php endif; ?>
+<?php if (!$patient): ?>
+    <div class="alert alert-warning">Todavía no tienes tu ficha completa. Acude a recepción para terminar tu registro.</div>
+<?php endif; ?>
 
 <div class="alert alert-info mb-4">
     La disponibilidad de los médicos cambia según su turno y su agenda. Si no ves espacio, consulta recepción.

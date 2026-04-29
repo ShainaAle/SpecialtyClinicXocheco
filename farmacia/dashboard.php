@@ -2,6 +2,9 @@
 require_once '../src/auth.php';
 requireRol(['farmaceutico']);
 require_once '../src/conexion/conexion.php';
+require_once '../src/inventory.php';
+
+inventorySyncStates($conn);
 
 $basePath = '..';
 $pageTitle = 'Farmacia';
@@ -150,7 +153,7 @@ include '../src/portal/header.php';
                             <td><?php echo htmlspecialchars($item['nombre_comercial']); ?></td>
                             <td><?php echo (int)$item['cantidad_disponible']; ?></td>
                             <td><?php echo date('d/m/Y', strtotime($item['fecha_caducidad'])); ?></td>
-                            <td><span class="chip chip-blue"><?php echo htmlspecialchars($item['estado']); ?></span></td>
+                            <td><span class="chip <?php echo inventoryGetStateChip($item['estado']); ?>"><?php echo htmlspecialchars($item['estado']); ?></span></td>
                         </tr>
                     <?php endforeach; ?>
                     <?php if (!$inventory): ?>

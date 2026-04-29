@@ -1,15 +1,16 @@
 <?php
 require_once '../../src/auth.php';
-requireRol(['admin']);
+requireRol(['admin', 'recepcion']);
 require_once '../../src/conexion/conexion.php';
 require_once '../../src/audit.php';
+require_once '../../src/recepcion/context.php';
 
 $basePath = '../..';
 $pageTitle = 'Usuarios';
 $pageSubtitle = 'Buscar, ordenar y administrar cuentas, roles y direcciones.';
 $activeModule = 'usuarios';
 
-function bindParams(mysqli_stmt $stmt, string $types, array &$params): void
+function bindParamsRecepcion(mysqli_stmt $stmt, string $types, array &$params): void
 {
     if ($types === '') {
         return;
@@ -23,7 +24,7 @@ function bindParams(mysqli_stmt $stmt, string $types, array &$params): void
     call_user_func_array([$stmt, 'bind_param'], $bind);
 }
 
-function tableQuery(mysqli $conn, string $sql, string $types = '', array $params = []): array
+function tableQueryRecepcion(mysqli $conn, string $sql, string $types = '', array $params = []): array
 {
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -31,7 +32,7 @@ function tableQuery(mysqli $conn, string $sql, string $types = '', array $params
     }
 
     if ($types !== '' && !empty($params)) {
-        bindParams($stmt, $types, $params);
+        bindParamsRecepcion($stmt, $types, $params);
     }
 
     $stmt->execute();
@@ -50,7 +51,7 @@ function tableQuery(mysqli $conn, string $sql, string $types = '', array $params
 $message = '';
 $error = '';
 
-$rolesCatalog = tableQuery(
+$rolesCatalog = tableQueryRecepcion(
     $conn,
     'SELECT id_tipo_usuario, nombre_rol FROM TIPO_USUARIO ORDER BY id_tipo_usuario'
 );
@@ -123,9 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->bind_param('iisssi', $domicilioId, $idTipoUsuario, $nombre, $apellidos, $correo, $userId);
                     }
                     $stmt->execute();
-                    if (!auditLog($conn, 'USUARIOS', 'ACTUALIZAR usuario #' . $userId)) {
-                        throw new RuntimeException('No se pudo registrar la bitácora.');
-                    }
+                    auditLog($conn, 'USUARIOS', 'ACTUALIZAR usuario #' . $userId);
                 } else {
                     $stmt = $conn->prepare('INSERT INTO DOMICILIO (calle, numero_exterior, colonia, codigo_postal, ciudad, estado) VALUES (?, ?, ?, ?, ?, ?)');
                     $stmt->bind_param('ssssss', $calle, $numeroExterior, $colonia, $codigoPostal, $ciudad, $estado);
@@ -135,9 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $conn->prepare('INSERT INTO USUARIOS (id_domicilio, id_tipo_usuario, nombre, apellidos, correo, password_hash) VALUES (?, ?, ?, ?, ?, ?)');
                     $stmt->bind_param('iissss', $domicilioId, $idTipoUsuario, $nombre, $apellidos, $correo, $password);
                     $stmt->execute();
-                    if (!auditLog($conn, 'USUARIOS', 'INSERTAR usuario #' . (int)$conn->insert_id)) {
-                        throw new RuntimeException('No se pudo registrar la bitácora.');
-                    }
+                    auditLog($conn, 'USUARIOS', 'INSERTAR usuario #' . (int)$conn->insert_id);
                 }
 
                 $conn->commit();
@@ -168,7 +165,7 @@ if ($redirectTarget) {
 $editingUser = null;
 if (isset($_GET['edit'])) {
     $editId = (int)$_GET['edit'];
-    $editRows = tableQuery(
+    $editRows = tableQueryRecepcion(
         $conn,
         "SELECT u.id_usuario, u.nombre, u.apellidos, u.correo, u.password_hash, u.id_tipo_usuario,
                 d.calle, d.numero_exterior, d.colonia, d.codigo_postal, d.ciudad, d.estado
@@ -181,7 +178,7 @@ if (isset($_GET['edit'])) {
     $editingUser = $editRows[0] ?? null;
 }
 
-$roleCounts = tableQuery(
+$roleCounts = tableQueryRecepcion(
     $conn,
     "SELECT t.nombre_rol, COUNT(u.id_usuario) AS total
      FROM TIPO_USUARIO t
@@ -229,9 +226,9 @@ if (!empty($where)) {
 }
 
 $sql .= " ORDER BY {$sortField} {$dir}, u.id_usuario ASC";
-$users = tableQuery($conn, $sql, $types, $params);
+$users = tableQueryRecepcion($conn, $sql, $types, $params);
 
-function sortLink(string $label, string $key, string $currentSort, string $currentDir, array $baseParams): string
+function sortLinkRecepcion(string $label, string $key, string $currentSort, string $currentDir, array $baseParams): string
 {
     $isActive = $currentSort === $key;
     $nextDir = $isActive && $currentDir === 'ASC' ? 'desc' : 'asc';
@@ -248,7 +245,7 @@ $baseFilterParams = [
     'dir' => strtolower($dir),
 ];
 
-include '../../src/admin/header.php';
+include '../../src/portal/header.php';
 ?>
 
 <?php if ($message): ?><div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
@@ -387,10 +384,10 @@ include '../../src/admin/header.php';
                     </div>
                 </form>
                 <div class="d-flex flex-wrap gap-2 mt-3">
-                    <?php echo sortLink('ID', 'id', $sort, $dir, $baseFilterParams); ?>
-                    <?php echo sortLink('Nombre', 'name', $sort, $dir, $baseFilterParams); ?>
-                    <?php echo sortLink('Correo', 'email', $sort, $dir, $baseFilterParams); ?>
-                    <?php echo sortLink('Rol', 'role', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo sortLinkRecepcion('ID', 'id', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo sortLinkRecepcion('Nombre', 'name', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo sortLinkRecepcion('Correo', 'email', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo sortLinkRecepcion('Rol', 'role', $sort, $dir, $baseFilterParams); ?>
                 </div>
             </div>
         </div>

@@ -2,6 +2,9 @@
 require_once '../src/auth.php';
 requireRol(['admin']);
 require_once '../src/conexion/conexion.php';
+require_once '../src/inventory.php';
+
+inventorySyncStates($conn);
 
 $basePath = '..';
 $pageTitle = 'Dashboard';
@@ -193,21 +196,13 @@ include '../src/admin/header.php';
             </div>
             <div class="panel-body d-grid gap-3">
                 <?php foreach ($inventory as $item): ?>
-                    <?php
-                    $chip = 'chip-green';
-                    if ($item['estado'] === 'Caducado') {
-                        $chip = 'chip-red';
-                    } elseif (stripos($item['estado'], 'caducar') !== false) {
-                        $chip = 'chip-amber';
-                    }
-                    ?>
                     <div class="mini-card">
                         <div class="d-flex justify-content-between gap-2">
                             <div>
                                 <strong class="d-block"><?php echo htmlspecialchars($item['nombre_comercial']); ?></strong>
                                 <small class="text-muted-soft">Caduca: <?php echo date('d/m/Y', strtotime($item['fecha_caducidad'])); ?></small>
                             </div>
-                            <span class="chip <?php echo $chip; ?>"><?php echo htmlspecialchars($item['estado']); ?></span>
+                            <span class="chip <?php echo inventoryGetStateChip($item['estado']); ?>"><?php echo htmlspecialchars($item['estado']); ?></span>
                         </div>
                         <div class="mt-2 text-muted-soft small">Existencia: <?php echo (int)$item['cantidad_disponible']; ?> unidades</div>
                     </div>

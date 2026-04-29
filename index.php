@@ -821,9 +821,8 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'paciente') {
                     <h6 class="mb-3">Accesos</h6>
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="index.php">Inicio</a></li>
-                        <li class="mb-2"><a href="servicios.php">Servicios</a></li>
-                        <li class="mb-2"><a href="medicos.php">Médicos</a></li>
-                        <li class="mb-2"><a href="signin.php">Portal del paciente</a></li>
+                        <li class="mb-2"><a href="#servicios">Servicios</a></li>
+                        <li class="mb-2"><a href="portal.php">Mi portal</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4">

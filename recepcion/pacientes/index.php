@@ -1,15 +1,16 @@
 <?php
 require_once '../../src/auth.php';
-requireRol(['admin']);
+requireRol(['admin', 'recepcion']);
 require_once '../../src/conexion/conexion.php';
 require_once '../../src/audit.php';
+require_once '../../src/recepcion/context.php';
 
 $basePath = '../..';
 $pageTitle = 'Pacientes';
 $pageSubtitle = 'Gestionar perfiles clínicos y ver la edad directamente en pantalla.';
 $activeModule = 'pacientes';
 
-function patientRows(mysqli $conn, string $sql, string $types = '', array $params = []): array
+function patientRowsRecepcion(mysqli $conn, string $sql, string $types = '', array $params = []): array
 {
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -43,14 +44,14 @@ $adeudoFilter = $_GET['adeudo'] ?? 'all';
 $sort = $_GET['sort'] ?? 'id';
 $dir = strtolower($_GET['dir'] ?? 'asc') === 'desc' ? 'DESC' : 'ASC';
 $bloodTypeFilter = trim($_GET['sangre'] ?? '');
+$selectedUserId = (int)($_GET['user'] ?? 0);
 
 $bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Desconocido'];
-$selectedUserId = (int)($_GET['user'] ?? 0);
 
 $editing = null;
 if (isset($_GET['edit'])) {
     $editId = (int)$_GET['edit'];
-    $rows = patientRows(
+    $rows = patientRowsRecepcion(
         $conn,
         "SELECT p.id_paciente, p.id_usuario, p.fecha_nacimiento, p.tipo_sangre, p.alergias, p.contacto_emergencia, p.adeudo,
                 u.nombre, u.apellidos, u.correo
@@ -64,9 +65,9 @@ if (isset($_GET['edit'])) {
 }
 
 if ($selectedUserId > 0 && !$editing) {
-    $selectedUserExists = patientRows(
+    $selectedUserExists = patientRowsRecepcion(
         $conn,
-        "SELECT u.id_usuario, CONCAT(u.nombre, ' ', u.apellidos) AS nombre_completo, u.correo
+        "SELECT u.id_usuario
          FROM USUARIOS u
          INNER JOIN TIPO_USUARIO t ON u.id_tipo_usuario = t.id_tipo_usuario
          WHERE u.id_usuario = ? AND t.nombre_rol = 'Paciente'",
@@ -78,12 +79,12 @@ if ($selectedUserId > 0 && !$editing) {
     }
 }
 
-$availableUsers = patientRows(
+$availableUsers = patientRowsRecepcion(
     $conn,
     "SELECT u.id_usuario, CONCAT(u.nombre, ' ', u.apellidos) AS nombre_completo, u.correo
      FROM USUARIOS u
      INNER JOIN TIPO_USUARIO t ON u.id_tipo_usuario = t.id_tipo_usuario
-     WHERE t.nombre_rol = 'Paciente'
+    WHERE t.nombre_rol = 'Paciente'
        AND (u.id_usuario NOT IN (SELECT id_usuario FROM PACIENTES) OR u.id_usuario = ?)
      ORDER BY u.nombre, u.apellidos",
     'i',
@@ -180,9 +181,9 @@ if (!empty($where)) {
 }
 
 $sql .= " ORDER BY {$sortField} {$dir}, p.id_paciente ASC";
-$patients = patientRows($conn, $sql, $types, $params);
+$patients = patientRowsRecepcion($conn, $sql, $types, $params);
 
-function patientSortButton(string $label, string $key, string $currentSort, string $currentDir, array $baseParams): string
+function patientSortButtonRecepcion(string $label, string $key, string $currentSort, string $currentDir, array $baseParams): string
 {
     $isActive = $currentSort === $key;
     $nextDir = $isActive && $currentDir === 'ASC' ? 'desc' : 'asc';
@@ -200,7 +201,7 @@ $baseFilterParams = [
     'dir' => strtolower($dir),
 ];
 
-include '../../src/admin/header.php';
+include '../../src/portal/header.php';
 ?>
 
 <?php if ($message): ?><div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
@@ -343,10 +344,10 @@ include '../../src/admin/header.php';
                     </div>
                 </form>
                 <div class="d-flex flex-wrap gap-2 mt-3">
-                    <?php echo patientSortButton('ID', 'id', $sort, $dir, $baseFilterParams); ?>
-                    <?php echo patientSortButton('Nombre', 'name', $sort, $dir, $baseFilterParams); ?>
-                    <?php echo patientSortButton('Edad', 'age', $sort, $dir, $baseFilterParams); ?>
-                    <?php echo patientSortButton('Correo', 'email', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo patientSortButtonRecepcion('ID', 'id', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo patientSortButtonRecepcion('Nombre', 'name', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo patientSortButtonRecepcion('Edad', 'age', $sort, $dir, $baseFilterParams); ?>
+                    <?php echo patientSortButtonRecepcion('Correo', 'email', $sort, $dir, $baseFilterParams); ?>
                 </div>
             </div>
         </div>
